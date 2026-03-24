@@ -40,7 +40,19 @@ export async function isAuthenticated() {
 
 export async function getRole() {
   const cookieStore = await cookies();
+  const hasAuth = cookieStore.has(AUTH_COOKIE);
+  if (!hasAuth) return null;
   return cookieStore.get(ROLE_COOKIE)?.value || "user";
+}
+
+export async function getUser() {
+  const role = await getRole();
+  if (!role) return null;
+  return {
+    id: role === "owner" ? "owner-1" : "user-1",
+    name: role === "owner" ? "Shop Owner" : "Valued Customer",
+    role: role
+  };
 }
 
 export async function isOwner() {

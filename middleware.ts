@@ -7,7 +7,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Paths that don't require authentication
-  const publicPaths = ["/login", "/api/products"]; // Allow GET products publicly, but other methods should be protected (simplified for now)
+  const publicPaths = ["/login", "/api/products", "/products"]; 
   const isPublicPath = publicPaths.includes(pathname) || pathname === "/";
 
   // Allow access to static assets

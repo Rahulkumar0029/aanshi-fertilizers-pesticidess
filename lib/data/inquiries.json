@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1774334334094,
+        "userId": "user-1",
+        "userName": "Valued Customer",
+        "productId": 1,
+        "productName": "Premium Urea Fertilizer",
+        "productCategory": "Fertilizers",
+        "timestamp": "2026-03-24T06:38:54.094Z",
+        "status": "pending"
+    },
+    {
+        "id": 1774334847338,
+        "userId": "user-1",
+        "userName": "Valued Customer",
+        "productId": 2,
+        "productName": "Crop Protector Insecticide",
+        "productCategory": "Pesticides",
+        "timestamp": "2026-03-24T06:47:27.338Z",
+        "status": "pending"
+    },
+    {
+        "id": 1774337853239,
+        "userId": "user-1",
+        "userName": "Valued Customer",
+        "productId": 5,
+        "productName": "EcoFarming Organic Mix",
+        "productCategory": "Organic",
+        "timestamp": "2026-03-24T07:37:33.240Z",
+        "status": "pending"
+    }
+]

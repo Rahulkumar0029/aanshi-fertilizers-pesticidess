@@ -31,6 +31,24 @@ export default function Products() {
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleInquiry = async (product: any) => {
+        try {
+            await fetch("/api/inquiries", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    productId: product.id,
+                    productName: product.name,
+                    productCategory: product.category
+                })
+            });
+        } catch (error) {
+            console.error("Inquiry logging failed", error);
+        }
+        // Redirect to WhatsApp
+        window.open(`https://wa.me/91XXXXXXXXXX?text=I am interested in ${product.name}`, "_blank");
+    };
+
     return (
         <div className="pt-10 bg-[#f8faf8] min-h-screen">
             {/* Header */}
@@ -74,54 +92,63 @@ export default function Products() {
 
             {/* Product Grid */}
             <section className="container mx-auto px-4 py-20">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {filteredProducts.map(product => (
-                        <div key={product.id} className="bg-white rounded-[2rem] overflow-hidden border border-border shadow-sm hover:shadow-2xl transition-all group flex flex-col">
-                            <div className="relative h-64 overflow-hidden">
-                                <Image
-                                    src={product.image}
-                                    alt={product.name}
-                                    fill
-                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary border border-primary/20">
-                                    {product.category}
-                                </div>
-                            </div>
-
-                            <div className="p-8 flex-grow space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <h3 className="text-2xl font-bold text-foreground leading-snug">{product.name}</h3>
-                                </div>
-
-                                <div className="space-y-3 pt-2">
-                                    <div className="text-sm">
-                                        <span className="text-gray-400 font-medium block">Usage & Crops:</span>
-                                        <span className="text-gray-700 font-bold">{product.usage}</span>
-                                    </div>
-                                    <div className="text-sm">
-                                        <span className="text-gray-400 font-medium block">Available Sizes:</span>
-                                        <span className="text-gray-700 font-bold">{product.size}</span>
-                                    </div>
-                                </div>
-
-                                <div className="pt-6 mt-auto">
-                                    <a
-                                        href={`https://wa.me/91XXXXXXXXXX?text=I am interested in ${product.name}`}
-                                        className="w-full bg-accent text-primary py-4 rounded-xl flex items-center justify-center gap-3 font-bold hover:bg-primary hover:text-white transition-all group/btn"
-                                    >
-                                        <PhoneForwarded size={18} /> Order via WhatsApp
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {filteredProducts.length === 0 && (
-                    <div className="text-center py-20">
-                        <h3 className="text-2xl text-gray-400 italic">No products found matching your search.</h3>
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                        <p className="text-gray-500 font-medium italic">Loading products...</p>
                     </div>
+                ) : (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                            {filteredProducts.map(product => (
+                                <div key={product.id} className="bg-white rounded-[2rem] overflow-hidden border border-border shadow-sm hover:shadow-2xl transition-all group flex flex-col">
+                                    <div className="relative h-64 overflow-hidden">
+                                        <Image
+                                            src={product.image}
+                                            alt={product.name}
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-primary border border-primary/20">
+                                            {product.category}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8 flex-grow space-y-4">
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="text-2xl font-bold text-foreground leading-snug">{product.name}</h3>
+                                        </div>
+
+                                        <div className="space-y-3 pt-2">
+                                            <div className="text-sm">
+                                                <span className="text-gray-400 font-medium block">Usage & Crops:</span>
+                                                <span className="text-gray-700 font-bold">{product.usage}</span>
+                                            </div>
+                                            <div className="text-sm">
+                                                <span className="text-gray-400 font-medium block">Available Sizes:</span>
+                                                <span className="text-gray-700 font-bold">{product.size}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-6 mt-auto">
+                                            <button
+                                                onClick={() => handleInquiry(product)}
+                                                className="w-full bg-accent text-primary py-4 rounded-xl flex items-center justify-center gap-3 font-bold hover:bg-primary hover:text-white transition-all group/btn"
+                                            >
+                                                <PhoneForwarded size={18} /> Order via WhatsApp
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {filteredProducts.length === 0 && (
+                            <div className="text-center py-20">
+                                <h3 className="text-2xl text-gray-400 italic">No products found matching your search.</h3>
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
 

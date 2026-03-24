@@ -18,15 +18,19 @@ export default function Header() {
 
   const navLinks = [
     { name: "Home", href: "/" },
-    { name: "About Us", href: "/about" },
     { name: "Products", href: "/products" },
-    { name: "Wholesale", href: "/wholesale" },
-    { name: "Farmer Support", href: "/support" },
-    { name: "Contact", href: "/contact" },
   ];
 
   if (role === "owner") {
-    navLinks.push({ name: "Owner Panel", href: "/owner" });
+    navLinks.push({ name: "Admin Dashboard", href: "/owner" });
+    navLinks.push({ name: "Order Inquiries", href: "/owner/orders" });
+  } else if (role === "user") {
+    navLinks.push({ name: "My Activity", href: "/my-orders" });
+    navLinks.push({ name: "Wholesale", href: "/wholesale" });
+  } else {
+    navLinks.push({ name: "About Us", href: "/about" });
+    navLinks.push({ name: "Wholesale", href: "/wholesale" });
+    navLinks.push({ name: "Login", href: "/login" });
   }
 
   return (
@@ -51,7 +55,7 @@ export default function Header() {
           {link.name}
             </Link>
           ))}
-          {!isLoginPage && (
+          {role !== null && (
             <button
               onClick={async () => {
                 const { logout } = await import("@/lib/auth");
@@ -87,7 +91,7 @@ export default function Header() {
               {link.name}
             </Link>
           ))}
-          {!isLoginPage && (
+          {role !== null && (
             <button
               onClick={async () => {
                 const { logout } = await import("@/lib/auth");
