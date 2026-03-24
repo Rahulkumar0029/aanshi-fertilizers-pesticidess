@@ -17,7 +17,7 @@ async function saveProducts(products: any[]) {
 export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id } = await context.params;
     const updatedProduct = await request.json();
@@ -41,7 +41,7 @@ export async function PUT(
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
-) {
+): Promise<Response> {
   try {
     const { id } = await context.params;
     const products = await getProducts();
