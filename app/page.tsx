@@ -18,7 +18,7 @@ export default function Home() {
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section */}
-      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[80vh] flex items-center justify-center pt-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-r from-[#1a2e1a]/90 to-transparent z-10" />
           <Image
@@ -35,7 +35,7 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-md px-4 py-2 rounded-full border border-primary/30 text-accent font-semibold text-sm">
               <Award size={18} /> 15+ Years of Agriculture Excellence
             </div>
-            
+
             {role === "owner" ? (
               <h1 className="text-5xl md:text-7xl font-bold leading-tight">
                 Welcome Back, <br />
@@ -48,16 +48,30 @@ export default function Home() {
               </h1>
             ) : (
               <h1 className="text-5xl md:text-7xl font-bold leading-tight">
-                Trusted Agricultural <br />
-                <span className="text-primary italic">Solutions</span> for India
+                Trusted Fertilizers & Pesticides Supplier <br />
+                <span className="text-primary italic">with 15+ Years of Experience</span>
               </h1>
             )}
 
             <p className="text-xl text-gray-200 max-w-2xl leading-relaxed">
-              Premium fertilizers, pesticides, and seeds to maximize your crop yield.
-              Government certified products delivered straight to your farm or shop.
+              Providing high-quality fertilizers, pesticides, and agricultural solutions
+              to farmers and retailers across India. Government-certified products
+              with trusted expertise of Anil Kumar Bishnoi.
+            </p>
+            <p className="text-green-300 font-semibold">
+              Led by Anil Kumar Bishnoi – 15+ years of trusted agricultural expertise
+            </p>
+            <p className="text-gray-300 mt-4">
+              Established on <strong>22 May 2023</strong> • Growing trusted farmer community 🌱
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
+              <a
+                href="https://wa.me/91XXXXXXXXXX"
+                target="_blank"
+                className="bg-green-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-600 transition-all"
+              >
+                WhatsApp Inquiry
+              </a>
               {role === "owner" ? (
                 <>
                   <Link href="/owner" className="bg-primary text-white px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 hover:translate-x-1 transition-all">
@@ -133,10 +147,10 @@ export default function Home() {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { icon: ShieldCheck, label: "Government Certified", sub: "Approved Licenses" },
-              { icon: Truck, label: "PAN India Supply", sub: "Reliable Delivery" },
-              { icon: CheckCircle, label: "Quality Assured", sub: "Geniune Products" },
-              { icon: Award, label: "15+ Years Experience", sub: "Trusted Locally" },
+              { icon: ShieldCheck, label: "Government Certified", sub: "Fully Licensed & Approved Products" },
+              { icon: Truck, label: "All India Supply", sub: "Fast & Reliable Delivery Anywhere" },
+              { icon: CheckCircle, label: "Top Quality Products", sub: "From Trusted Agricultural Brands" },
+              { icon: Award, label: "15+ Years Experience", sub: "Expert Guidance for Farmers" },
             ].map((stat, idx) => (
               <div key={idx} className="flex items-center gap-4 group">
                 <div className="bg-white p-3 rounded-2xl shadow-sm border border-border group-hover:scale-110 transition-transform">
