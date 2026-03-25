@@ -28,5 +28,15 @@
         "productCategory": "Organic",
         "timestamp": "2026-03-24T07:37:33.240Z",
         "status": "pending"
+    },
+    {
+        "id": 1774414238893,
+        "userId": "user-1",
+        "userName": "Valued Customer",
+        "productId": 2,
+        "productName": "Crop Protector Insecticide",
+        "productCategory": "Pesticides",
+        "timestamp": "2026-03-25T04:50:38.893Z",
+        "status": "pending"
     }
 ]
