@@ -1,10 +1,11 @@
 "use client";
 
+export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, PhoneForwarded } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const CATEGORIES = [
     "All",
@@ -22,34 +23,35 @@ export default function Products() {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
 
+    const searchParams = useSearchParams();
     const router = useRouter();
 
     // Fetch products
     useEffect(() => {
-        const loadProducts = async () => {
-            try {
-                const res = await fetch("/api/products");
-                const data = await res.json();
+        fetch("/api/products")
+            .then((res) => res.json())
+            .then((data) => {
                 setProducts(data);
-            } catch (err) {
-                console.error("Failed to fetch products", err);
-            } finally {
                 setLoading(false);
-            }
-        };
-
-        loadProducts();
+            })
+            .catch((err) => {
+                console.error("Failed to fetch products", err);
+                setLoading(false);
+            });
     }, []);
 
-    // Get category from URL (SAFE method)
+    // Sync category from URL
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            const cat = params.get("category");
+        if (!searchParams) return;
 
-            if (cat) setSelectedCategory(cat);
+        const categoryFromURL = searchParams.get("category");
+
+        if (categoryFromURL) {
+            setSelectedCategory(categoryFromURL);
+        } else {
+            setSelectedCategory("All");
         }
-    }, []);
+    }, [searchParams]);
 
     // Filter logic
     const filteredProducts = products.filter(
@@ -103,7 +105,10 @@ export default function Products() {
                 <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 flex flex-col lg:flex-row gap-6 items-center">
                     {/* Search */}
                     <div className="relative w-full lg:w-1/3">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                        <Search
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                            size={20}
+                        />
                         <input
                             type="text"
                             placeholder="Search products..."
@@ -123,8 +128,8 @@ export default function Products() {
                                     router.push(`/products?category=${cat}`);
                                 }}
                                 className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${selectedCategory === cat
-                                        ? "bg-primary text-white shadow-md"
-                                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                    ? "bg-primary text-white shadow-md"
+                                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                                     }`}
                             >
                                 {cat}
@@ -149,6 +154,7 @@ export default function Products() {
                                     key={product.id}
                                     className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-xl transition flex flex-col"
                                 >
+                                    {/* Image */}
                                     <div className="relative h-60">
                                         <Image
                                             src={product.image || "/placeholder.png"}
@@ -158,17 +164,26 @@ export default function Products() {
                                         />
                                     </div>
 
+                                    {/* Content */}
                                     <div className="p-6 flex flex-col gap-3 flex-grow">
                                         <h3 className="text-xl font-bold">{product.name}</h3>
-                                        <p className="text-sm text-gray-500">{product.category}</p>
 
+                                        <p className="text-sm text-gray-500">
+                                            {product.category}
+                                        </p>
+
+                                        {/* Price */}
                                         <p className="text-lg font-bold text-primary">
                                             ₹ {product.price || "Contact for price"}
                                         </p>
 
-                                        <p className="text-sm text-gray-600">{product.usage}</p>
+                                        <p className="text-sm text-gray-600">
+                                            {product.usage}
+                                        </p>
 
+                                        {/* Buttons */}
                                         <div className="mt-auto flex flex-col gap-3 pt-4">
+                                            {/* View Details */}
                                             <Link
                                                 href={`/products/${product.id}`}
                                                 className="border border-primary text-primary py-2 rounded-lg text-center font-semibold hover:bg-primary hover:text-white transition"
@@ -176,6 +191,7 @@ export default function Products() {
                                                 View Details
                                             </Link>
 
+                                            {/* WhatsApp */}
                                             <button
                                                 onClick={() => handleInquiry(product)}
                                                 className="bg-green-500 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold hover:bg-green-600 transition"
@@ -189,6 +205,7 @@ export default function Products() {
                             ))}
                         </div>
 
+                        {/* Empty State */}
                         {filteredProducts.length === 0 && (
                             <div className="text-center py-20 text-gray-400">
                                 No products found.

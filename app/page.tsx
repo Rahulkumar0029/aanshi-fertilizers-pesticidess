@@ -65,13 +65,7 @@ export default function Home() {
               Established on <strong>22 May 2023</strong> • Growing trusted farmer community 🌱
             </p>
             <div className="flex flex-wrap gap-4 pt-4">
-              <a
-                href="https://wa.me/91XXXXXXXXXX"
-                target="_blank"
-                className="bg-green-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-600 transition-all"
-              >
-                WhatsApp Inquiry
-              </a>
+
               {role === "owner" ? (
                 <>
                   <Link href="/owner" className="bg-primary text-white px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 hover:translate-x-1 transition-all">
@@ -175,16 +169,24 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { title: "Fertilizers", icon: Wheat },
-              { title: "Crop Protection", icon: Beaker },
-              { title: "Seeds", icon: Sprout },
+              { title: "Fertilizers", icon: Wheat, value: "Fertilizers" },
+              { title: "Crop Protection", icon: Beaker, value: "Pesticides" },
+              { title: "Seeds", icon: Sprout, value: "Seeds" },
             ].map((cat, idx) => (
-              <div key={idx} className="bg-accent/20 p-8 rounded-3xl border border-border hover:shadow-lg transition-all text-center">
+              <div
+                key={idx}
+                className="bg-accent/20 p-8 rounded-3xl border border-border hover:shadow-lg transition-all text-center" >
                 <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
                   <cat.icon size={32} />
                 </div>
+
                 <h3 className="text-2xl font-bold mb-4">{cat.title}</h3>
-                <Link href="/products" className="text-primary font-bold hover:underline">View Catalog</Link>
+
+                <Link
+                  href={`/products?category=${cat.value}`}
+                  className="text-primary font-bold hover:underline" >
+                  View Catalog
+                </Link>
               </div>
             ))}
           </div>
