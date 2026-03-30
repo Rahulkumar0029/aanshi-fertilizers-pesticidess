@@ -20,8 +20,8 @@ export default function OwnerOrders() {
   }, []);
 
   const filteredInquiries = inquiries.filter((iq) =>
-    iq.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    iq.userName.toLowerCase().includes(searchQuery.toLowerCase())
+    (iq.productName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+    (iq.userName?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -79,7 +79,7 @@ export default function OwnerOrders() {
                   <AnimatePresence>
                     {filteredInquiries.map((iq) => (
                       <motion.tr
-                        key={iq.id}
+                        key={iq._id} // ✅ Standardized to _id
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -104,12 +104,12 @@ export default function OwnerOrders() {
                         <td className="p-4">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Clock size={14} />
-                            {new Date(iq.timestamp).toLocaleString()}
+                            {iq.timestamp ? new Date(iq.timestamp).toLocaleString() : "N/A"}
                           </div>
                         </td>
                         <td className="p-4">
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
-                            Pending Inq.
+                            {iq.status || "Pending"}
                           </span>
                         </td>
                         <td className="p-4">

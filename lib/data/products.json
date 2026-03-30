@@ -1,83 +1,50 @@
 [
-    {
-        "id": 1,
-        "name": "Premium Urea Fertilizer",
-        "category": "Fertilizers",
-        "size": "50kg",
-        "price": "Contact for Pricing",
-        "usage": "Wheat, Rice, Corn",
-        "image": "https://images.unsplash.com/photo-1628352081506-83c43123ed6d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        "id": 2,
-        "name": "Crop Protector Insecticide",
-        "category": "Pesticides",
-        "size": "1L, 5L",
-        "price": "Contact for Pricing",
-        "usage": "Cotton, Sugarcane",
-        "image": "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        "id": 3,
-        "name": "Golden Harvest Seeds",
-        "category": "Seeds",
-        "size": "1kg, 5kg",
-        "price": "Contact for Pricing",
-        "usage": "Mustard, Pulses",
-        "image": "https://images.unsplash.com/photo-1505330622279-bf7d7fc918f4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        "id": 4,
-        "name": "Root Boost Growth Promoter",
-        "category": "Plant Growth",
-        "size": "500ml",
-        "price": "Contact for Pricing",
-        "usage": "All Crops",
-        "image": "https://images.unsplash.com/photo-1587334274328-64186a80aeee?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        "id": 5,
-        "name": "EcoFarming Organic Mix",
-        "category": "Organic",
-        "size": "25kg",
-        "price": "Contact for Pricing",
-        "usage": "Vegetables, Fruits",
-        "image": "https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        "id": 6,
-        "name": "Fungal Shield Fungicide",
-        "category": "Fungicides",
-        "size": "500g",
-        "price": "Contact for Pricing",
-        "usage": "Chilli, Potato",
-        "image": "https://images.unsplash.com/photo-1589923188900-85dae523342b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-    },
-    {
-        "name": "Mega Nutr",
-        "category": "Fertilizers",
-        "size": "10kg",
-        "price": "Contact for Pricing",
-        "usage": "General purpose",
-        "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
-        "id": 7
-    },
-    {
-        "name": "Mega Nutrients",
-        "category": "Fertilizers",
-        "size": "10kg",
-        "price": "Contact for Pricing",
-        "usage": "General purpose",
-        "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
-        "id": 8
-    },
-    {
-        "name": "Mega Nutrients",
-        "category": "Fertilizers",
-        "size": "10kg",
-        "price": "Contact for Pricing",
-        "usage": "General purpose",
-        "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
-        "id": 9
-    }
+  {
+    "id": 1,
+    "name": "Premium Urea Fertilizerrr",
+    "category": "Fertilizers",
+    "price": "Contact for Pricing",
+    "usage": "Wheat, Rice, Corn",
+    "image": "https://images.unsplash.com/photo-1628352081506-83c43123ed6d"
+  },
+  {
+    "id": 2,
+    "name": "Crop Protector Insecticide",
+    "category": "Pesticides",
+    "price": "Contact for Pricing",
+    "usage": "Cotton, Sugarcane",
+    "image": "https://images.unsplash.com/photo-1592982537447-7440770cbfc9"
+  },
+  {
+    "id": 3,
+    "name": "Golden Harvest Seeds",
+    "category": "Seeds",
+    "price": "Contact for Pricing",
+    "usage": "Mustard, Pulses",
+    "image": "https://images.unsplash.com/photo-1505330622279-bf7d7fc918f4"
+  },
+  {
+    "id": 4,
+    "name": "Root Boost Growth Promoter",
+    "category": "Plant Growth",
+    "price": "Contact for Pricing",
+    "usage": "All Crops",
+    "image": "https://images.unsplash.com/photo-1587334274328-64186a80aeee"
+  },
+  {
+    "id": 5,
+    "name": "EcoFarming Organic Mix",
+    "category": "Organic",
+    "price": "Contact for Pricing",
+    "usage": "Vegetables, Fruits",
+    "image": "https://images.unsplash.com/photo-1615811361523-6bd03d7748e7"
+  },
+  {
+    "id": 6,
+    "name": "Fungal Shield Fungicide",
+    "category": "Fungicides",
+    "price": "Contact for Pricing",
+    "usage": "Chilli, Potato",
+    "image": "https://images.unsplash.com/photo-1589923188900-85dae523342b"
+  }
 ]

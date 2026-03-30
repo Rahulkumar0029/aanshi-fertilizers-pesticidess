@@ -1,40 +1,42 @@
 import Image from "next/image";
 import Link from "next/link";
-
+import { notFound } from "next/navigation";
 
 // 🔹 Fetch product by ID
 async function getProduct(id: string) {
-    const res = await fetch("https://aanshi-fertilizers-pesticidess.vercel.app/api/products", {
-        cache: "no-store",
-    });
+    try {
+        const res = await fetch(
+            `${process.env.NEXT_PUBLIC_BASE_URL}/api/products/${id}`,
+            {
+                cache: "no-store",
+            }
+        );
 
-    const products = await res.json();
+        if (!res.ok) return null;
 
-    return products.find((p: any) => String(p.id) === String(id));
+        return await res.json();
+    } catch (err) {
+        console.error("API failed:", err);
+        return null;
+    }
 }
 
 // 🔹 Product Details Page
-export default async function ProductDetails({ params }: any) {
-
-    // ✅ FIX: handle params correctly
-    const { id } = await params;
+export default async function ProductDetails({
+    params,
+}: {
+    params: Promise<{ id: string }>; // ✅ FIXED
+}) {
+    const { id } = await params; // ✅ FIXED
 
     const product = await getProduct(id);
 
-    // ❌ If product not found
-    if (!product) {
-        return (
-            <div className="text-center py-20 text-gray-500 text-xl">
-                Product not found
-            </div>
-        );
-    }
+    if (!product) return notFound();
 
     return (
         <div className="bg-[#f8faf8] min-h-screen py-12 px-4">
             <div className="container mx-auto max-w-5xl bg-white rounded-2xl shadow-lg p-8">
 
-                {/* 🔙 Back Button */}
                 <Link
                     href="/products"
                     className="text-primary font-semibold mb-6 inline-block hover:underline"
@@ -44,7 +46,6 @@ export default async function ProductDetails({ params }: any) {
 
                 <div className="grid md:grid-cols-2 gap-10">
 
-                    {/* 🖼 Image */}
                     <div className="relative h-80 md:h-full rounded-xl overflow-hidden">
                         <Image
                             src={product.image || "/placeholder.png"}
@@ -54,10 +55,8 @@ export default async function ProductDetails({ params }: any) {
                         />
                     </div>
 
-                    {/* 📦 Content */}
                     <div className="flex flex-col gap-5">
-
-                        <h1 className="text-3xl font-bold text-foreground">
+                        <h1 className="text-3xl font-bold">
                             {product.name}
                         </h1>
 
@@ -65,47 +64,48 @@ export default async function ProductDetails({ params }: any) {
                             Category: {product.category}
                         </p>
 
-                        {/* 💰 Price */}
                         <p className="text-2xl font-bold text-primary">
                             ₹ {product.price || "Contact for price"}
                         </p>
 
-                        {/* 📄 Description */}
                         <div>
-                            <h3 className="font-semibold text-lg mb-1">Description</h3>
+                            <h3 className="font-semibold text-lg mb-1">
+                                Description
+                            </h3>
                             <p className="text-gray-600">
                                 {product.description ||
                                     "High-quality agricultural product suitable for better crop yield."}
                             </p>
                         </div>
 
-                        {/* 🌾 Usage */}
                         <div>
-                            <h3 className="font-semibold text-lg mb-1">Usage</h3>
+                            <h3 className="font-semibold text-lg mb-1">
+                                Usage
+                            </h3>
                             <p className="text-gray-600">
-                                {product.usage || "Use as per agricultural guidelines."}
+                                {product.usage ||
+                                    "Use as per agricultural guidelines."}
                             </p>
                         </div>
 
-                        {/* 📦 Size */}
                         {product.size && (
                             <div>
                                 <h3 className="font-semibold text-lg mb-1">
                                     Available Sizes
                                 </h3>
-                                <p className="text-gray-600">{product.size}</p>
+                                <p className="text-gray-600">
+                                    {product.size}
+                                </p>
                             </div>
                         )}
 
-                        {/* 📲 WhatsApp Button */}
                         <a
-                            href={`https://wa.me/91XXXXXXXXXX?text=Hello, I am interested in ${product.name}. Please share details.`}
+                            href={`https://wa.me/91XXXXXXXXXX?text=Hello, I am interested in ${product.name} (${product.category}). Please share details.`}
                             target="_blank"
                             className="mt-6 bg-green-500 text-white py-4 rounded-xl text-center font-bold text-lg hover:bg-green-600 transition"
                         >
                             Order on WhatsApp
                         </a>
-
                     </div>
                 </div>
             </div>

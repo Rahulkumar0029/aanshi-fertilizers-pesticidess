@@ -1,60 +1,127 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { connectDB } from "@/lib/mongodb";
+import Product from "@/lib/models/Product";
+import mongoose from "mongoose";
 
-const DATA_PATH = path.join(process.cwd(), "lib/data/products.json");
 
-async function getProducts() {
-  const data = await fs.readFile(DATA_PATH, "utf-8");
-  return JSON.parse(data);
-}
-
-async function saveProducts(products: any[]) {
-  await fs.writeFile(DATA_PATH, JSON.stringify(products, null, 4));
-}
-
-// ✅ UPDATE PRODUCT
-export async function PUT(
-  request: NextRequest,
+// ✅ GET SINGLE PRODUCT
+export async function GET(
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<Response> {
+) {
   try {
     const { id } = await context.params;
-    const updatedProduct = await request.json();
-    const products = await getProducts();
 
-    const index = products.findIndex((p: any) => p.id === parseInt(id));
-    if (index === -1) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    // ✅ Validate ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid product ID" },
+        { status: 400 }
+      );
     }
 
-    products[index] = { ...updatedProduct, id: parseInt(id) };
-    await saveProducts(products);
+    await connectDB();
 
-    return NextResponse.json(products[index]);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    const product = await Product.findById(id).lean();
+
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(product);
+  } catch (error: any) {
+    console.error("GET ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch product", details: error.message },
+      { status: 500 }
+    );
   }
 }
 
-// ✅ DELETE PRODUCT
-export async function DELETE(
-  request: NextRequest,
+
+// ✅ UPDATE PRODUCT
+export async function PUT(
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
-): Promise<Response> {
+) {
   try {
     const { id } = await context.params;
-    const products = await getProducts();
 
-    const filteredProducts = products.filter((p: any) => p.id !== parseInt(id));
-    if (filteredProducts.length === products.length) {
-      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid product ID" },
+        { status: 400 }
+      );
     }
 
-    await saveProducts(filteredProducts);
+    await connectDB();
 
-    return NextResponse.json({ message: "Product deleted" });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+    const body = await req.json();
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      body,
+      {
+        new: true,
+        runValidators: true, // ✅ ensures schema validation
+      }
+    ).lean();
+
+    if (!updatedProduct) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(updatedProduct);
+  } catch (error: any) {
+    console.error("PUT ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to update product", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+
+// ✅ DELETE PRODUCT
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid product ID" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const deletedProduct = await Product.findByIdAndDelete(id).lean();
+
+    if (!deletedProduct) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Product deleted successfully",
+    });
+  } catch (error: any) {
+    console.error("DELETE ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to delete product", details: error.message },
+      { status: 500 }
+    );
   }
 }

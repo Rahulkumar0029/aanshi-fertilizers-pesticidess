@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { logout } from "@/lib/auth";
 
 interface Product {
-  id: number;
+  _id: string; // ✅ Standardized
   name: string;
   category: string;
   size: string;
@@ -92,7 +92,7 @@ export default function OwnerDashboard() {
     if (!editingProduct) return;
     setFormLoading(true);
     try {
-      const res = await fetch(`/api/products/${editingProduct.id}`, {
+      const res = await fetch(`/api/products/${editingProduct._id}`, { // ✅ Use _id
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -108,7 +108,7 @@ export default function OwnerDashboard() {
     }
   };
 
-  const handleDeleteProduct = async (id: number) => {
+  const handleDeleteProduct = async (id: string) => { // ✅ string type
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
@@ -203,7 +203,7 @@ export default function OwnerDashboard() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  key={product.id}
+                  key={product._id} // ✅ Use _id
                   className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col group"
                 >
                   <div className="relative h-56 overflow-hidden">
@@ -231,7 +231,7 @@ export default function OwnerDashboard() {
                         <Pencil size={18} /> Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteProduct(product.id)}
+                        onClick={() => handleDeleteProduct(product._id)} // ✅ Use _id
                         className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"
                       >
                         <Trash2 size={18} />

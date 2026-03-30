@@ -1,41 +1,39 @@
 import { NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
+import { connectDB } from "@/lib/mongodb";
+import Product from "@/lib/models/Product";
 
-const DATA_PATH = path.join(process.cwd(), "lib/data/products.json");
-
-async function getProducts() {
-  const data = await fs.readFile(DATA_PATH, "utf-8");
-  return JSON.parse(data);
-}
-
-async function saveProducts(products: any[]) {
-  await fs.writeFile(DATA_PATH, JSON.stringify(products, null, 4));
-}
-
+// ✅ GET ALL PRODUCTS
 export async function GET() {
-  try {
-    const products = await getProducts();
-    return NextResponse.json(products);
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
-  }
+    try {
+        await connectDB();
+        const products = await Product.find({}).sort({ createdAt: -1 });
+        return NextResponse.json(products);
+    } catch (error: any) {
+        console.error("GET ERROR:", error);
+        return NextResponse.json(
+            { error: "Failed to fetch products", details: error.message },
+            { status: 500 }
+        );
+    }
 }
 
+// ✅ ADD PRODUCT
 export async function POST(request: Request) {
-  try {
-    const product = await request.json();
-    const products = await getProducts();
-    
-    // Simple ID generation
-    const newId = products.length > 0 ? Math.max(...products.map((p: any) => p.id)) + 1 : 1;
-    const newProduct = { ...product, id: newId };
-    
-    products.push(newProduct);
-    await saveProducts(products);
-    
-    return NextResponse.json(newProduct, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
-  }
+    try {
+        await connectDB();
+        const body = await request.json();
+
+        // Standardize: ensure _id is handled by Mongo, and we don't use 'id'
+        const { id, ...rest } = body;
+        
+        const newProduct = await Product.create(rest);
+
+        return NextResponse.json(newProduct, { status: 201 });
+    } catch (error: any) {
+        console.error("POST ERROR:", error);
+        return NextResponse.json(
+            { error: "Failed to add product", details: error.message },
+            { status: 500 }
+        );
+    }
 }

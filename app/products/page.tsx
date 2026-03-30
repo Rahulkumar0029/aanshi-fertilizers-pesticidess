@@ -1,11 +1,21 @@
 "use client";
 
 export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, PhoneForwarded } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
+
+type Product = {
+    _id: string;
+    name: string;
+    category: string;
+    price?: string;
+    usage?: string;
+    image?: string;
+};
 
 const CATEGORIES = [
     "All",
@@ -18,7 +28,7 @@ const CATEGORIES = [
 ];
 
 export default function Products() {
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
@@ -26,44 +36,39 @@ export default function Products() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    // Fetch products
+    // ✅ Fetch products
     useEffect(() => {
         fetch("/api/products")
             .then((res) => res.json())
             .then((data) => {
-                setProducts(data);
+                setProducts(Array.isArray(data) ? data : []);
                 setLoading(false);
             })
-            .catch((err) => {
-                console.error("Failed to fetch products", err);
-                setLoading(false);
-            });
+            .catch(() => setLoading(false));
     }, []);
 
-    // Sync category from URL
+    // ✅ Sync category from URL
     useEffect(() => {
-        if (!searchParams) return;
-
         const categoryFromURL = searchParams.get("category");
-
-        if (categoryFromURL) {
-            setSelectedCategory(categoryFromURL);
-        } else {
-            setSelectedCategory("All");
-        }
+        setSelectedCategory(categoryFromURL || "All");
     }, [searchParams]);
 
-    // Filter logic
-    const filteredProducts = products.filter(
-        (p) =>
-            (selectedCategory === "All" ||
-                p.category?.toLowerCase().trim() ===
-                selectedCategory.toLowerCase().trim()) &&
-            p.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // ✅ Filter logic
+    const filteredProducts = products.filter((p) => {
+        const matchCategory =
+            selectedCategory === "All" ||
+            p.category?.toLowerCase().trim() ===
+            selectedCategory.toLowerCase().trim();
 
-    // WhatsApp Inquiry
-    const handleInquiry = async (product: any) => {
+        const matchSearch = p.name
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase());
+
+        return matchCategory && matchSearch;
+    });
+
+    // ✅ WhatsApp Inquiry
+    const handleInquiry = async (product: Product) => {
         try {
             await fetch("/api/inquiries", {
                 method: "POST",
@@ -71,14 +76,12 @@ export default function Products() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    productId: product.id,
+                    productId: product._id,
                     productName: product.name,
                     productCategory: product.category,
                 }),
             });
-        } catch (error) {
-            console.error("Inquiry logging failed", error);
-        }
+        } catch { }
 
         window.open(
             `https://wa.me/91XXXXXXXXXX?text=Hello, I am interested in ${product.name} (${product.category}). Please share details.`,
@@ -103,6 +106,7 @@ export default function Products() {
             {/* Filters */}
             <section className="container mx-auto px-4 -mt-8">
                 <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 flex flex-col lg:flex-row gap-6 items-center">
+
                     {/* Search */}
                     <div className="relative w-full lg:w-1/3">
                         <Search
@@ -118,7 +122,7 @@ export default function Products() {
                         />
                     </div>
 
-                    {/* Category Buttons */}
+                    {/* Categories */}
                     <div className="flex flex-wrap justify-center gap-3 w-full lg:w-2/3">
                         {CATEGORIES.map((cat) => (
                             <button
@@ -144,14 +148,16 @@ export default function Products() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20 gap-4">
                         <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                        <p className="text-gray-500 italic">Loading products...</p>
+                        <p className="text-gray-500 italic">
+                            Loading products...
+                        </p>
                     </div>
                 ) : (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                            {filteredProducts.map((product) => (
+                            {filteredProducts.map((product, index) => (
                                 <div
-                                    key={product.id}
+                                    key={`${product._id}-${index}`}
                                     className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-xl transition flex flex-col"
                                 >
                                     {/* Image */}
@@ -166,15 +172,16 @@ export default function Products() {
 
                                     {/* Content */}
                                     <div className="p-6 flex flex-col gap-3 flex-grow">
-                                        <h3 className="text-xl font-bold">{product.name}</h3>
+                                        <h3 className="text-xl font-bold">
+                                            {product.name}
+                                        </h3>
 
                                         <p className="text-sm text-gray-500">
                                             {product.category}
                                         </p>
 
-                                        {/* Price */}
                                         <p className="text-lg font-bold text-primary">
-                                            ₹ {product.price || "Contact for price"}
+                                            ₹ {product.price || "Contact"}
                                         </p>
 
                                         <p className="text-sm text-gray-600">
@@ -183,17 +190,18 @@ export default function Products() {
 
                                         {/* Buttons */}
                                         <div className="mt-auto flex flex-col gap-3 pt-4">
-                                            {/* View Details */}
                                             <Link
-                                                href={`/products/${product.id}`}
+                                                href={`/products/${product._id}`}
                                                 className="border border-primary text-primary py-2 rounded-lg text-center font-semibold hover:bg-primary hover:text-white transition"
                                             >
                                                 View Details
                                             </Link>
 
-                                            {/* WhatsApp */}
                                             <button
-                                                onClick={() => handleInquiry(product)}
+                                                type="button"
+                                                onClick={() =>
+                                                    handleInquiry(product)
+                                                }
                                                 className="bg-green-500 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold hover:bg-green-600 transition"
                                             >
                                                 <PhoneForwarded size={18} />

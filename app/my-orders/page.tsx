@@ -54,7 +54,7 @@ export default function MyOrders() {
           <div className="space-y-6">
             {inquiries.map((iq) => (
               <motion.div
-                key={iq.id}
+                key={iq._id} // ✅ Standardized to _id
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white p-6 rounded-3xl shadow-sm border border-border flex flex-col md:flex-row justify-between items-center gap-6 hover:shadow-md transition-shadow"

@@ -38,5 +38,14 @@
         "productCategory": "Pesticides",
         "timestamp": "2026-03-25T04:50:38.893Z",
         "status": "pending"
+    },
+    {
+        "id": 1774718547379,
+        "userId": "user-1",
+        "userName": "Valued Customer",
+        "productName": "Premium Urea Fertilizer",
+        "productCategory": "Fertilizers",
+        "timestamp": "2026-03-28T17:22:27.379Z",
+        "status": "pending"
     }
 ]
