@@ -76,7 +76,7 @@ export default function Support() {
                                 <p className="text-gray-700 font-medium">Talk directly to our agricultural specialist for a personalized plan for your land.</p>
                                 <div className="pt-4">
                                     <a href="/contact" className="bg-primary text-white px-8 py-4 rounded-full font-bold inline-block hover:shadow-lg transition-shadow">
-                                        Get Free consultation
+                                        Get Free Consultation
                                     </a>
                                 </div>
                             </div>

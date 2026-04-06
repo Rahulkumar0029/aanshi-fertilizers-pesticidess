@@ -68,7 +68,7 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-xl">Email Inquiry</h4>
-                                    <p className="text-lg text-gray-700 mt-1">info@yourdomain.com</p>
+                                    <p className="text-lg text-gray-700 mt-1">info@aanshifertilizers.com</p>
                                 </div>
                             </div>
 

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { logout } from "@/lib/auth";
+import toast from "react-hot-toast";
 
 interface Product {
   _id: string; // ✅ Standardized
@@ -26,6 +27,7 @@ export default function OwnerDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -33,6 +35,7 @@ export default function OwnerDashboard() {
     category: CATEGORIES[0],
     size: "",
     price: "Contact for Pricing",
+    description: "",
     usage: "",
     image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
   });
@@ -75,6 +78,7 @@ export default function OwnerDashboard() {
           category: CATEGORIES[0],
           size: "",
           price: "Contact for Pricing",
+          description: "",
           usage: "",
           image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
         });
@@ -108,6 +112,43 @@ export default function OwnerDashboard() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    toast.loading("Uploading image...");
+    setImageLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.secure_url) {
+        setFormData((prev) => ({
+          ...prev,
+          image: data.secure_url,
+        }));
+        toast.dismiss();
+        toast.success("Image uploaded ✅");
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.dismiss();
+      toast.error("Upload failed ❌");
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
   const handleDeleteProduct = async (id: string) => { // ✅ string type
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
@@ -127,6 +168,7 @@ export default function OwnerDashboard() {
       category: product.category,
       size: product.size,
       price: product.price,
+      description: (product as any).description || "",
       usage: product.usage,
       image: product.image,
     });
@@ -159,6 +201,7 @@ export default function OwnerDashboard() {
                     category: CATEGORIES[0],
                     size: "",
                     price: "Contact for Pricing",
+                    description: "",
                     usage: "",
                     image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
                 });
@@ -317,12 +360,38 @@ export default function OwnerDashboard() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700 ml-1">Image URL</label>
+                    <label className="text-sm font-semibold text-gray-700 ml-1">Price (Optional)</label>
                     <input
-                      required
                       type="text"
                       className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
-                      placeholder="Unsplash URL"
+                      placeholder="e.g. 500 or Contact"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700 ml-1">Product Image</label>
+                    <div className="flex items-center gap-4">
+                        <label className="flex-1 flex flex-col items-center justify-center px-4 py-2 bg-white text-primary rounded-xl border border-primary border-dashed cursor-pointer hover:bg-primary hover:text-white transition-all">
+                            <span className="text-sm font-bold">{imageLoading ? "Uploading..." : "Upload Image"}</span>
+                            <input 
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                disabled={imageLoading}
+                            />
+                        </label>
+                        {formData.image && (
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
+                                <Image src={formData.image} alt="Preview" fill className="object-cover" />
+                            </div>
+                        )}
+                    </div>
+                    <input
+                      type="text"
+                      className="w-full mt-2 px-4 py-2 text-xs rounded-xl border border-gray-100 bg-gray-50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
+                      placeholder="Or paste Image URL"
                       value={formData.image}
                       onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                     />
@@ -330,12 +399,24 @@ export default function OwnerDashboard() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 ml-1">Usage & Description</label>
+                  <label className="text-sm font-semibold text-gray-700 ml-1">Short Description</label>
                   <textarea
                     required
-                    rows={3}
+                    rows={2}
                     className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
-                    placeholder="Describe how to use this product and what crops it's for..."
+                    placeholder="Brief overview of the product..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700 ml-1">Usage Guidelines</label>
+                  <textarea
+                    required
+                    rows={2}
+                    className="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"
+                    placeholder="How to apply this product..."
                     value={formData.usage}
                     onChange={(e) => setFormData({ ...formData, usage: e.target.value })}
                   />

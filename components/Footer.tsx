@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin, Leaf, Facebook, Instagram, Twitter } from "lucide-react";
+import { BUSINESS_DETAILS } from "@/lib/constants";
 
 export default function Footer() {
     return (
@@ -61,29 +62,29 @@ export default function Footer() {
 
                             <li className="flex items-start gap-3">
                                 <MapPin className="text-[#a8e6cf] mt-1" size={18} />
-                                <span>Rajasthan, India</span>
+                                <span>{BUSINESS_DETAILS.address}</span>
                             </li>
 
                             {/* CLICK TO CALL */}
                             <li className="flex items-center gap-3">
                                 <Phone className="text-[#a8e6cf]" size={18} />
-                                <a href="tel:+91XXXXXXXXXX" className="hover:text-white">
-                                    +91 XXXXXXXXXX
+                                <a href={`tel:${BUSINESS_DETAILS.phone}`} className="hover:text-white">
+                                    {BUSINESS_DETAILS.phone}
                                 </a>
                             </li>
 
                             {/* EMAIL */}
                             <li className="flex items-center gap-3">
                                 <Mail className="text-[#a8e6cf]" size={18} />
-                                <a href="mailto:info@aanshifertilizers.com" className="hover:text-white">
-                                    info@aanshifertilizers.com
+                                <a href={`mailto:${BUSINESS_DETAILS.email}`} className="hover:text-white">
+                                    {BUSINESS_DETAILS.email}
                                 </a>
                             </li>
 
                             {/* WHATSAPP BUTTON (VERY IMPORTANT) */}
                             <li className="pt-2">
                                 <a
-                                    href="https://wa.me/91XXXXXXXXXX?text=Hello, I want to inquire about your products."
+                                    href={`https://wa.me/${BUSINESS_DETAILS.whatsapp}?text=Hello, I want to inquire about your products.`}
                                     target="_blank"
                                     className="block text-center bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition-all"
                                 >
