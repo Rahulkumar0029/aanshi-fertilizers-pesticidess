@@ -28,11 +28,21 @@ const UserSchema = new mongoose.Schema(
       enum: ["user", "owner"],
       default: "user",
     },
-    passwordResetToken: {
+
+    // Owner OTP 2FA
+    ownerOtpCodeHash: {
       type: String,
       default: null,
     },
-    passwordResetExpires: {
+    ownerOtpExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    ownerOtpAttempts: {
+      type: Number,
+      default: 0,
+    },
+    ownerOtpLastSentAt: {
       type: Date,
       default: null,
     },

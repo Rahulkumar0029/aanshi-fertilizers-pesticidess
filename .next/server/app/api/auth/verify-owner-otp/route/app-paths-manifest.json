@@ -1,0 +1,3 @@
+{
+  "/api/auth/verify-owner-otp/route": "app/api/auth/verify-owner-otp/route.js"
+}

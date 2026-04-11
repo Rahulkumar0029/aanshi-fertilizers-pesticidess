@@ -11,6 +11,14 @@ export async function POST() {
     secure: process.env.NODE_ENV === "production",
   });
 
+  response.cookies.set("ownerPending2FA", "", {
+    httpOnly: true,
+    expires: new Date(0),
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+
   response.cookies.set("auth_token", "", {
     expires: new Date(0),
     path: "/",
