@@ -9,6 +9,7 @@ const InquirySchema = new mongoose.Schema(
         productId: { type: String, required: true },
         productName: { type: String, required: true },
         productCategory: { type: String, required: true },
+        productSize: { type: String, default: "" },
 
         status: {
             type: String,

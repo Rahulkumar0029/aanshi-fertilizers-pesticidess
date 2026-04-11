@@ -10,7 +10,9 @@ type Product = {
     mrp?: number;
     price?: number;
     usage?: string;
+    description?: string;
     image?: string;
+    size?: string;
 };
 
 export default function AdminPage() {
@@ -23,19 +25,19 @@ export default function AdminPage() {
         mrp: 0,
         price: 0,
         usage: "",
+        description: "",
         image: "",
+        size: "",
     });
 
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // ✅ PROTECT ADMIN
     useEffect(() => {
         if (localStorage.getItem("admin") !== "true") {
             window.location.href = "/admin/login";
         }
     }, []);
 
-    // ✅ FETCH PRODUCTS
     const fetchProducts = async () => {
         try {
             const res = await fetch("/api/products");
@@ -50,22 +52,24 @@ export default function AdminPage() {
         fetchProducts();
     }, []);
 
-    // ✅ HANDLE INPUT (NUMBER FIXED)
-    const handleChange = (e: any) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         const { name, value } = e.target;
 
-        setForm({
-            ...form,
+        setForm((prev) => ({
+            ...prev,
             [name]:
                 name === "price" || name === "mrp"
                     ? Number(value)
                     : value,
-        });
+        }));
     };
 
-    // ✅ IMAGE UPLOAD
-    const handleImageUpload = async (e: any) => {
-        const file = e.target.files[0];
+    const handleImageUpload = async (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        const file = e.target.files?.[0];
         if (!file) return;
 
         toast.loading("Uploading image...");
@@ -97,8 +101,7 @@ export default function AdminPage() {
         setLoading(false);
     };
 
-    // ✅ ADD / UPDATE
-    const handleSubmit = async (e: any) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (!form.name || !form.category) {
@@ -110,17 +113,24 @@ export default function AdminPage() {
         setLoading(true);
 
         try {
+            const payload = {
+                ...form,
+                size: form.size?.trim() || "",
+                description: form.description?.trim() || "",
+                usage: form.usage?.trim() || "",
+            };
+
             if (editingId) {
                 await fetch(`/api/products/${editingId}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(form),
+                    body: JSON.stringify(payload),
                 });
             } else {
                 await fetch("/api/products", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(form),
+                    body: JSON.stringify(payload),
                 });
             }
 
@@ -133,7 +143,9 @@ export default function AdminPage() {
                 mrp: 0,
                 price: 0,
                 usage: "",
+                description: "",
                 image: "",
+                size: "",
             });
 
             setEditingId(null);
@@ -146,7 +158,6 @@ export default function AdminPage() {
         setLoading(false);
     };
 
-    // ✅ DELETE
     const handleDelete = async (id: string) => {
         if (!confirm("Delete this product?")) return;
 
@@ -165,9 +176,18 @@ export default function AdminPage() {
         }
     };
 
-    // ✅ EDIT
     const handleEdit = (product: Product) => {
-        setForm(product);
+        setForm({
+            name: product.name || "",
+            category: product.category || "",
+            mrp: product.mrp || 0,
+            price: product.price || 0,
+            usage: product.usage || "",
+            description: product.description || "",
+            image: product.image || "",
+            size: product.size || "",
+        });
+
         setEditingId(product._id || null);
     };
 
@@ -175,21 +195,20 @@ export default function AdminPage() {
         <div className="min-h-screen bg-gray-100 p-6">
             <Toaster position="top-right" />
 
-            <h1 className="text-3xl font-bold mb-6">
+            <h1 className="mb-6 text-3xl font-bold">
                 Product Management
             </h1>
 
-            {/* ✅ FORM */}
             <form
                 onSubmit={handleSubmit}
-                className="bg-white p-6 rounded-xl shadow mb-10 grid gap-4"
+                className="mb-10 grid gap-4 rounded-xl bg-white p-6 shadow"
             >
                 <input
                     name="name"
                     placeholder="Product Name"
                     value={form.name}
                     onChange={handleChange}
-                    className="border p-2 rounded"
+                    className="rounded border p-2"
                     required
                 />
 
@@ -198,28 +217,34 @@ export default function AdminPage() {
                     placeholder="Category"
                     value={form.category}
                     onChange={handleChange}
-                    className="border p-2 rounded"
+                    className="rounded border p-2"
                     required
                 />
 
-                {/* ✅ MRP */}
+                <input
+                    name="size"
+                    placeholder="Size (e.g. 1L, 2L, 5kg)"
+                    value={form.size || ""}
+                    onChange={handleChange}
+                    className="rounded border p-2"
+                />
+
                 <input
                     name="mrp"
                     type="number"
                     placeholder="MRP (Original Price)"
                     value={form.mrp}
                     onChange={handleChange}
-                    className="border p-2 rounded"
+                    className="rounded border p-2"
                 />
 
-                {/* ✅ OFFER PRICE */}
                 <input
                     name="price"
                     type="number"
                     placeholder="Offer Price"
                     value={form.price}
                     onChange={handleChange}
-                    className="border p-2 rounded"
+                    className="rounded border p-2"
                 />
 
                 <input
@@ -227,44 +252,53 @@ export default function AdminPage() {
                     placeholder="Usage"
                     value={form.usage}
                     onChange={handleChange}
-                    className="border p-2 rounded"
+                    className="rounded border p-2"
                 />
 
-                {/* ✅ IMAGE */}
+                <textarea
+                    name="description"
+                    placeholder="Product Description"
+                    value={form.description || ""}
+                    onChange={handleChange}
+                    rows={4}
+                    className="rounded border p-2"
+                />
+
                 <input
                     type="file"
                     onChange={handleImageUpload}
-                    className="border p-2 rounded"
+                    className="rounded border p-2"
                 />
 
                 {form.image && (
                     <img
                         src={form.image}
-                        className="h-20 w-20 object-cover rounded"
+                        alt={form.name || "Product image"}
+                        className="h-20 w-20 rounded object-cover"
                     />
                 )}
 
                 <button
                     type="submit"
                     disabled={loading}
-                    className="bg-green-600 text-white py-2 rounded font-bold"
+                    className="rounded bg-green-600 py-2 font-bold text-white"
                 >
                     {loading
                         ? "Processing..."
                         : editingId
-                            ? "Update Product"
-                            : "Add Product"}
+                          ? "Update Product"
+                          : "Add Product"}
                 </button>
             </form>
 
-            {/* ✅ TABLE */}
-            <div className="bg-white rounded-xl shadow overflow-hidden">
+            <div className="overflow-hidden rounded-xl bg-white shadow">
                 <table className="w-full">
                     <thead className="bg-gray-200">
                         <tr>
                             <th className="p-3">Image</th>
                             <th>Name</th>
                             <th>Category</th>
+                            <th>Size</th>
                             <th>MRP</th>
                             <th>Price</th>
                             <th>Discount</th>
@@ -276,51 +310,42 @@ export default function AdminPage() {
                         {products.map((p) => {
                             const discount =
                                 p.mrp && p.price
-                                    ? Math.floor(
-                                        ((p.mrp - p.price) / p.mrp) * 100
-                                    )
+                                    ? Math.floor(((p.mrp - p.price) / p.mrp) * 100)
                                     : 0;
 
                             return (
                                 <tr
                                     key={p._id}
-                                    className="text-center border-t"
+                                    className="border-t text-center"
                                 >
                                     <td className="p-2">
                                         <img
-                                            src={
-                                                p.image ||
-                                                "/placeholder.png"
-                                            }
-                                            className="h-12 w-12 object-cover mx-auto"
+                                            src={p.image || "/placeholder.png"}
+                                            alt={p.name}
+                                            className="mx-auto h-12 w-12 object-cover"
                                         />
                                     </td>
 
                                     <td>{p.name}</td>
                                     <td>{p.category}</td>
+                                    <td>{p.size || "-"}</td>
                                     <td>₹ {p.mrp}</td>
                                     <td>₹ {p.price}</td>
-                                    <td className="text-red-500 font-bold">
-                                        {discount > 0
-                                            ? `${discount}%`
-                                            : "-"}
+                                    <td className="font-bold text-red-500">
+                                        {discount > 0 ? `${discount}%` : "-"}
                                     </td>
 
-                                    <td className="flex gap-2 justify-center py-2">
+                                    <td className="flex justify-center gap-2 py-2">
                                         <button
-                                            onClick={() =>
-                                                handleEdit(p)
-                                            }
-                                            className="bg-blue-500 text-white px-3 py-1 rounded"
+                                            onClick={() => handleEdit(p)}
+                                            className="rounded bg-blue-500 px-3 py-1 text-white"
                                         >
                                             Edit
                                         </button>
 
                                         <button
-                                            onClick={() =>
-                                                handleDelete(p._id!)
-                                            }
-                                            className="bg-red-500 text-white px-3 py-1 rounded"
+                                            onClick={() => handleDelete(p._id!)}
+                                            className="rounded bg-red-500 px-3 py-1 text-white"
                                         >
                                             Delete
                                         </button>

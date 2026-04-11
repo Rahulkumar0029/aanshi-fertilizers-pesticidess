@@ -24,9 +24,12 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         // Standardize: ensure _id is handled by Mongo, and we don't use 'id'
-        const { id, ...rest } = body;
-        
-        const newProduct = await Product.create(rest);
+        const { id, size, ...rest } = body;
+
+        const newProduct = await Product.create({
+            ...rest,
+            size: typeof size === "string" ? size.trim() : "",
+        });
 
         return NextResponse.json(newProduct, { status: 201 });
     } catch (error: any) {

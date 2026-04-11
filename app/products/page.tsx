@@ -17,6 +17,7 @@ type Product = {
     mrp?: number;
     usage?: string;
     image?: string;
+    size?: string;
 };
 
 type AuthUser = {
@@ -127,6 +128,7 @@ function ProductsContent() {
                     productId: product._id,
                     productName: product.name,
                     productCategory: product.category,
+                    productSize: product.size || "",
                     status: "pending",
                 }),
             });
@@ -148,6 +150,7 @@ function ProductsContent() {
                     productId: product._id,
                     productName: product.name,
                     productCategory: product.category,
+                    productSize: product.size || "",
                     customerName: user.name,
                     phone: user.phone,
                     status: "Pending",
@@ -160,7 +163,9 @@ function ProductsContent() {
                 console.error("Order save failed:", orderError);
             }
 
-            const message = `Hello, I am ${user.name} and I am interested in ${product.name} (${product.category}). My phone number is ${user.phone}. Please share details.`;
+            const sizeText = product.size ? `, Size: ${product.size}` : "";
+
+            const message = `Hello, I am ${user.name} and I am interested in ${product.name} (${product.category}${sizeText}). My phone number is ${user.phone}. Please share details.`;
 
             window.open(
                 `https://wa.me/${BUSINESS_DETAILS.whatsapp}?text=${encodeURIComponent(message)}`,
@@ -173,11 +178,11 @@ function ProductsContent() {
     };
 
     return (
-        <div className="pt-10 bg-[#f8faf8] min-h-screen">
+        <div className="min-h-screen bg-[#f8faf8] pt-10">
             {/* HEADER */}
-            <section className="bg-primary text-white py-16 px-4">
+            <section className="bg-primary px-4 py-16 text-white">
                 <div className="container mx-auto text-center">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4">
+                    <h1 className="mb-4 text-4xl font-bold md:text-5xl">
                         Our Product Catalog
                     </h1>
                     <p className="text-xl opacity-90">
@@ -187,15 +192,15 @@ function ProductsContent() {
             </section>
 
             {/* FILTER */}
-            <section className="container mx-auto px-4 -mt-8">
-                <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col lg:flex-row gap-6 items-center">
+            <section className="container mx-auto -mt-8 px-4">
+                <div className="flex flex-col items-center gap-6 rounded-2xl bg-white p-6 shadow-xl lg:flex-row">
                     {/* SEARCH */}
                     <div className="relative w-full lg:w-1/3">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Search products..."
-                            className="w-full pl-12 pr-4 py-3 rounded-xl border"
+                            className="w-full rounded-xl border py-3 pl-12 pr-4"
                             value={searchQuery}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                 setSearchQuery(e.target.value)
@@ -204,7 +209,7 @@ function ProductsContent() {
                     </div>
 
                     {/* CATEGORY */}
-                    <div className="flex flex-wrap gap-3 w-full lg:w-2/3 justify-center">
+                    <div className="flex w-full flex-wrap justify-center gap-3 lg:w-2/3">
                         {CATEGORIES.map((cat) => (
                             <button
                                 key={cat}
@@ -212,7 +217,7 @@ function ProductsContent() {
                                     setSelectedCategory(cat);
                                     router.push(`/products?category=${cat}`);
                                 }}
-                                className={`px-5 py-2 rounded-full ${
+                                className={`rounded-full px-5 py-2 ${
                                     selectedCategory === cat
                                         ? "bg-primary text-white"
                                         : "bg-gray-200"
@@ -231,14 +236,14 @@ function ProductsContent() {
                     <p className="text-center">Loading...</p>
                 ) : (
                     <>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
                             {filteredProducts.map((product) => {
                                 const discount = getDiscount(product.mrp, product.price);
 
                                 return (
                                     <div
                                         key={product._id}
-                                        className="bg-white rounded-2xl shadow overflow-hidden"
+                                        className="overflow-hidden rounded-2xl bg-white shadow"
                                     >
                                         {/* IMAGE */}
                                         <div className="relative h-60">
@@ -251,21 +256,30 @@ function ProductsContent() {
 
                                             {/* DISCOUNT BADGE */}
                                             {discount > 0 && (
-                                                <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                                                <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-md">
                                                     {discount}% OFF
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* CONTENT */}
-                                        <div className="p-6 flex flex-col gap-2">
-                                            <h3 className="font-bold text-lg">
+                                        <div className="flex flex-col gap-2 p-6">
+                                            <h3 className="text-lg font-bold">
                                                 {product.name}
                                             </h3>
 
                                             <p className="text-sm text-gray-500">
                                                 {product.category}
                                             </p>
+
+                                            {/* SIZE */}
+                                            {product.size && (
+                                                <div className="mt-1">
+                                                    <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+                                                        Size: {product.size}
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             {/* PRICE */}
                                             <div className="flex items-center gap-3">
@@ -274,7 +288,7 @@ function ProductsContent() {
                                                 </span>
 
                                                 {product.mrp && (
-                                                    <span className="text-gray-400 line-through text-lg">
+                                                    <span className="text-lg text-gray-400 line-through">
                                                         ₹ {product.mrp}
                                                     </span>
                                                 )}
@@ -288,14 +302,14 @@ function ProductsContent() {
                                             <div className="mt-3 flex flex-col gap-2">
                                                 <Link
                                                     href={`/products/${product._id}`}
-                                                    className="border text-center py-2 rounded"
+                                                    className="rounded border py-2 text-center"
                                                 >
                                                     View Details
                                                 </Link>
 
                                                 <button
                                                     onClick={() => handleInquiry(product)}
-                                                    className="bg-green-500 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold hover:bg-green-600 transition shadow-md"
+                                                    className="flex items-center justify-center gap-2 rounded-lg bg-green-500 py-3 font-bold text-white shadow-md transition hover:bg-green-600"
                                                 >
                                                     <PhoneForwarded size={16} />
                                                     WhatsApp
@@ -308,7 +322,7 @@ function ProductsContent() {
                         </div>
 
                         {filteredProducts.length === 0 && (
-                            <p className="text-center text-gray-400 mt-10">
+                            <p className="mt-10 text-center text-gray-400">
                                 No products found
                             </p>
                         )}

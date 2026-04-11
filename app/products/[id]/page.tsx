@@ -34,7 +34,6 @@ export default async function ProductDetails({
 
     if (!product) return notFound();
 
-    // ✅ DISCOUNT CALCULATION (NO DECIMALS)
     const getDiscount = (mrp?: number, price?: number) => {
         if (!mrp || !price) return 0;
         return Math.floor(((mrp - price) / mrp) * 100);
@@ -42,23 +41,22 @@ export default async function ProductDetails({
 
     const discount = getDiscount(product.mrp, product.price);
 
-    return (
-        <div className="bg-[#f8faf8] min-h-screen py-12 px-4">
-            <div className="container mx-auto max-w-5xl bg-white rounded-2xl shadow-lg p-8">
+    const whatsappMessage = `Hello, I am interested in ${product.name} (${product.category}${
+        product.size ? `, Size: ${product.size}` : ""
+    }). Please share details.`;
 
-                {/* 🔙 BACK */}
+    return (
+        <div className="min-h-screen bg-[#f8faf8] px-4 py-12">
+            <div className="container mx-auto max-w-5xl rounded-2xl bg-white p-8 shadow-lg">
                 <Link
                     href="/products"
-                    className="text-primary font-semibold mb-6 inline-block hover:underline"
+                    className="mb-6 inline-block font-semibold text-primary hover:underline"
                 >
                     ← Back to Products
                 </Link>
 
-                <div className="grid md:grid-cols-2 gap-10">
-
-                    {/* 🖼 IMAGE */}
-                    <div className="relative h-80 md:h-full rounded-xl overflow-hidden">
-
+                <div className="grid gap-10 md:grid-cols-2">
+                    <div className="relative h-80 overflow-hidden rounded-xl md:h-full">
                         <Image
                             src={product.image || "/placeholder.png"}
                             alt={product.name}
@@ -66,17 +64,14 @@ export default async function ProductDetails({
                             className="object-cover"
                         />
 
-                        {/* 🔥 DISCOUNT BADGE */}
                         {discount > 0 && (
-                            <span className="absolute top-3 right-3 bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full shadow">
+                            <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white shadow">
                                 {discount}% OFF
                             </span>
                         )}
                     </div>
 
-                    {/* 📦 CONTENT */}
                     <div className="flex flex-col gap-5">
-
                         <h1 className="text-3xl font-bold">
                             {product.name}
                         </h1>
@@ -85,58 +80,58 @@ export default async function ProductDetails({
                             Category: {product.category}
                         </p>
 
-                        {/* 💰 PRICE SECTION */}
+                        {product.size && (
+                            <div>
+                                <h3 className="mb-1 text-lg font-semibold">
+                                    Available Size
+                                </h3>
+                                <span className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-800">
+                                    {product.size}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-3">
                             <span className="text-2xl font-bold text-primary">
-                                ₹ {product.price || "Contact"}
+                                {typeof product.price === "number"
+                                    ? `₹ ${product.price}`
+                                    : "Contact for Price"}
                             </span>
 
-                            {product.mrp && (
-                                <span className="text-gray-400 line-through text-lg">
+                            {typeof product.mrp === "number" && (
+                                <span className="text-lg text-gray-400 line-through">
                                     ₹ {product.mrp}
                                 </span>
                             )}
                         </div>
 
-                        {/* 📄 DESCRIPTION */}
                         <div>
-                            <h3 className="font-semibold text-lg mb-1">
+                            <h3 className="mb-1 text-lg font-semibold">
                                 Description
                             </h3>
                             <p className="text-gray-600">
-                                {product.description ||
+                                {product.description?.trim() ||
                                     "High-quality agricultural product suitable for better crop yield."}
                             </p>
                         </div>
 
-                        {/* 📘 USAGE */}
                         <div>
-                            <h3 className="font-semibold text-lg mb-1">
+                            <h3 className="mb-1 text-lg font-semibold">
                                 Usage
                             </h3>
                             <p className="text-gray-600">
-                                {product.usage ||
+                                {product.usage?.trim() ||
                                     "Use as per agricultural guidelines."}
                             </p>
                         </div>
 
-                        {/* 📦 SIZE */}
-                        {product.size && (
-                            <div>
-                                <h3 className="font-semibold text-lg mb-1">
-                                    Available Sizes
-                                </h3>
-                                <p className="text-gray-600">
-                                    {product.size}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* 📲 WHATSAPP */}
                         <a
-                            href={`https://wa.me/${BUSINESS_DETAILS.whatsapp}?text=Hello, I am interested in ${product.name} (${product.category}). Please share details.`}
+                            href={`https://wa.me/${BUSINESS_DETAILS.whatsapp}?text=${encodeURIComponent(
+                                whatsappMessage
+                            )}`}
                             target="_blank"
-                            className="mt-6 bg-green-500 text-white py-4 rounded-xl text-center font-bold text-lg hover:bg-green-600 transition"
+                            rel="noopener noreferrer"
+                            className="mt-6 rounded-xl bg-green-500 py-4 text-center text-lg font-bold text-white transition hover:bg-green-600"
                         >
                             Order on WhatsApp
                         </a>

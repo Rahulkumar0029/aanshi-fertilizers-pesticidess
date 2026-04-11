@@ -3,7 +3,6 @@ import { connectDB } from "@/lib/mongodb";
 import Product from "@/lib/models/Product";
 import mongoose from "mongoose";
 
-
 // ✅ GET SINGLE PRODUCT
 export async function GET(
   req: NextRequest,
@@ -12,7 +11,6 @@ export async function GET(
   try {
     const { id } = await context.params;
 
-    // ✅ Validate ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { error: "Invalid product ID" },
@@ -41,7 +39,6 @@ export async function GET(
   }
 }
 
-
 // ✅ UPDATE PRODUCT
 export async function PUT(
   req: NextRequest,
@@ -63,10 +60,16 @@ export async function PUT(
 
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      body,
+      {
+        ...body,
+        size: typeof body.size === "string" ? body.size.trim() : "",
+        description:
+          typeof body.description === "string" ? body.description.trim() : "",
+        usage: typeof body.usage === "string" ? body.usage.trim() : "",
+      },
       {
         new: true,
-        runValidators: true, // ✅ ensures schema validation
+        runValidators: true,
       }
     ).lean();
 
@@ -86,7 +89,6 @@ export async function PUT(
     );
   }
 }
-
 
 // ✅ DELETE PRODUCT
 export async function DELETE(

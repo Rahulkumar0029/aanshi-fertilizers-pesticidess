@@ -1,61 +1,44 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { connectDB } from "@/lib/mongodb";
+import User from "@/lib/models/User";
 
-const AUTH_COOKIE = "auth_token";
-const ROLE_COOKIE = "auth_role";
+type AuthUser = {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role: string;
+};
 
-export async function login(role: "user" | "owner" = "user") {
+export async function getUser(): Promise<AuthUser | null> {
   const cookieStore = await cookies();
-  
-  // Set auth token
-  cookieStore.set(AUTH_COOKIE, "mock-session-id", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-  });
+  const userId = cookieStore.get("userId")?.value;
 
-  // Set role
-  cookieStore.set(ROLE_COOKIE, role, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-  });
-}
+  if (!userId) return null;
 
-export async function logout() {
-  const cookieStore = await cookies();
-  cookieStore.delete(AUTH_COOKIE);
-  cookieStore.delete(ROLE_COOKIE);
-}
+  await connectDB();
 
-export async function isAuthenticated() {
-  const cookieStore = await cookies();
-  return cookieStore.has(AUTH_COOKIE);
-}
+  const user = await User.findById(userId).select("-password").lean();
 
-export async function getRole() {
-  const cookieStore = await cookies();
-  const hasAuth = cookieStore.has(AUTH_COOKIE);
-  if (!hasAuth) return null;
-  return cookieStore.get(ROLE_COOKIE)?.value || "user";
-}
+  if (!user) return null;
 
-export async function getUser() {
-  const role = await getRole();
-  if (!role) return null;
   return {
-    id: role === "owner" ? "owner-1" : "user-1",
-    name: role === "owner" ? "Shop Owner" : "Valued Customer",
-    role: role
+    id: String(user._id),
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
   };
 }
 
-export async function isOwner() {
-  const role = await getRole();
-  return role === "owner";
+export async function isAuthenticated(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return !!cookieStore.get("userId")?.value;
+}
+
+export async function isOwner(): Promise<boolean> {
+  const user = await getUser();
+  return user?.role === "owner";
 }

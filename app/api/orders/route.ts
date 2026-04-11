@@ -57,6 +57,7 @@ export async function POST(req: Request) {
             productId,
             productName,
             productCategory,
+            productSize,
             customerName,
             phone,
             status,
@@ -70,16 +71,24 @@ export async function POST(req: Request) {
             );
         }
 
-        const order = await Order.create({
-            userId: user.id,
-            productId,
-            productName,
-            productCategory,
-            customerName: customerName || user.name,
-            phone: phone || "",
-            status: status || "Pending",
-            source: source || "WhatsApp",
-        });
+        if (!phone || typeof phone !== "string") {
+    return NextResponse.json(
+        { error: "Phone is required" },
+        { status: 400 }
+    );
+}
+
+const order = await Order.create({
+    userId: user.id,
+    productId,
+    productName,
+    productCategory,
+    productSize: typeof productSize === "string" ? productSize.trim() : "",
+    customerName: customerName || user.name,
+    phone: phone.trim(),
+    status: status || "Pending",
+    source: source || "WhatsApp",
+});
 
         return NextResponse.json(order, { status: 201 });
     } catch (error: any) {

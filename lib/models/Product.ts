@@ -10,7 +10,12 @@ const ProductSchema = new mongoose.Schema({
     image: { type: String },
     description: { type: String },
     usage: { type: String },
-    size: { type: String },
+   size: {
+  type: String,
+  trim: true,
+  lowercase: true,
+  default: "",
+},
 }, { timestamps: true });
 
 export default mongoose.models.Product || mongoose.model("Product", ProductSchema);

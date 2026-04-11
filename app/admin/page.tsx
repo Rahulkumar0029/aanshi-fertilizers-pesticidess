@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { 
-    LayoutDashboard, 
-    Package, 
-    ShoppingBag, 
-    MessageSquare, 
-    BarChart3, 
-    Image as ImageIcon, 
-    Settings, 
+import {
+    LayoutDashboard,
+    Package,
+    ShoppingBag,
+    MessageSquare,
+    BarChart3,
+    Image as ImageIcon,
+    Settings,
     LogOut,
     ExternalLink,
-    Leaf
+    Leaf,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const sections = [
     { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard, color: "text-blue-600", bg: "bg-blue-50" },
@@ -25,23 +26,53 @@ const sections = [
     { name: "Settings", path: "/admin/settings", icon: Settings, color: "text-slate-600", bg: "bg-slate-50" },
 ];
 
+type AuthUser = {
+    _id?: string;
+    id?: string;
+    name: string;
+    role: string;
+};
+
 export default function AdminHome() {
     const [adminName, setAdminName] = useState("Admin");
+    const router = useRouter();
 
+    // only load name, not protect route here
     useEffect(() => {
-        if (localStorage.getItem("admin") !== "true") {
-            window.location.href = "/admin/login";
-        }
+        const loadUser = async () => {
+            try {
+                const res = await fetch("/api/auth/me", {
+                    method: "GET",
+                    credentials: "include",
+                });
+
+                if (!res.ok) return;
+
+                const user: AuthUser = await res.json();
+                setAdminName(user.name || "Admin");
+            } catch (error) {
+                console.error("Failed to load admin user:", error);
+            }
+        };
+
+        loadUser();
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem("admin");
-        window.location.href = "/admin/login";
+    const handleLogout = async () => {
+        try {
+            await fetch("/api/auth/logout", {
+                method: "POST",
+            });
+
+            router.push("/login");
+            router.refresh();
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
     };
 
     return (
         <div className="min-h-screen bg-[#f8fafc] p-4 md:p-10">
-            
             {/* TOP BAR */}
             <div className="max-w-7xl mx-auto flex justify-between items-center mb-12">
                 <div className="flex items-center gap-3">
@@ -49,21 +80,22 @@ export default function AdminHome() {
                         <Leaf className="text-white" size={24} />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Aanshi Panel</h1>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Management Hub</p>
+                        <h1 className="text-2xl font-black text-gray-900">Aanshi Panel</h1>
+                        <p className="text-xs text-gray-400 uppercase">Management Hub</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link 
-                        href="/" 
-                        className="hidden md:flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-primary transition-colors"
+                    <Link
+                        href="/"
+                        className="hidden md:flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-primary"
                     >
                         <ExternalLink size={16} /> View Website
                     </Link>
-                    <button 
+
+                    <button
                         onClick={handleLogout}
-                        className="bg-white text-red-500 px-4 py-2 rounded-xl font-bold border border-red-100 shadow-sm hover:bg-red-50 transition-all flex items-center gap-2"
+                        className="bg-white text-red-500 px-4 py-2 rounded-xl font-bold border border-red-100 hover:bg-red-50 flex items-center gap-2"
                     >
                         <LogOut size={18} /> Logout
                     </button>
@@ -72,8 +104,12 @@ export default function AdminHome() {
 
             {/* WELCOME */}
             <div className="max-w-7xl mx-auto mb-10">
-                <h2 className="text-4xl font-bold text-gray-900">Welcome back, {adminName} <span className="animate-pulse">👋</span></h2>
-                <p className="text-gray-500 mt-2">Manage your store products, orders, and inquiries from one place.</p>
+                <h2 className="text-4xl font-bold text-gray-900">
+                    Welcome back, {adminName} 👋
+                </h2>
+                <p className="text-gray-500 mt-2">
+                    Manage your store products, orders, and inquiries from one place.
+                </p>
             </div>
 
             {/* GRID */}
@@ -82,30 +118,20 @@ export default function AdminHome() {
                     <Link
                         key={section.name}
                         href={section.path}
-                        className="group bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all flex flex-col items-center text-center relative overflow-hidden"
+                        className="group bg-white p-8 rounded-3xl shadow-sm border hover:shadow-xl flex flex-col items-center text-center"
                     >
-                        {/* DECORATIVE ELEMENT */}
-                        <div className={`absolute top-0 right-0 w-24 h-24 ${section.bg} opacity-20 rounded-bl-full translate-x-8 -translate-y-8 group-hover:translate-x-4 group-hover:-translate-y-4 transition-transform`} />
-
-                        <div className={`${section.bg} ${section.color} p-5 rounded-2xl mb-4 group-hover:scale-110 transition-transform`}>
+                        <div className={`${section.bg} ${section.color} p-5 rounded-2xl mb-4`}>
                             <section.icon size={32} />
                         </div>
                         <h2 className="text-xl font-bold text-gray-800">
                             {section.name}
                         </h2>
-                        <p className="text-sm text-gray-400 mt-1 font-medium">Manage all {section.name.toLowerCase()}</p>
+                        <p className="text-sm text-gray-400 mt-1">
+                            Manage all {section.name.toLowerCase()}
+                        </p>
                     </Link>
                 ))}
             </div>
-
-            {/* FOOTER */}
-            <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-gray-200 flex justify-between items-center text-gray-400 text-sm">
-                <p>© 2024 Aanshi Fertilizers & Pesticides</p>
-                <div className="flex gap-6">
-                    <Link href="/admin/settings" className="hover:text-primary transition-colors">Support</Link>
-                    <Link href="/admin/settings" className="hover:text-primary transition-colors">Privacy</Link>
-                </div>
-            </div>
         </div>
     );
-}
+}
