@@ -3,11 +3,10 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, Suspense } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Search, PhoneForwarded } from "lucide-react";
+import { Search } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { buildProductInquiryMessage, openWhatsApp } from "@/lib/whatsapp";
+import ProductCard from "@/components/ProductCard";
 
 type Product = {
   _id: string;
@@ -39,13 +38,6 @@ const CATEGORIES = [
   "Organic",
   "Fungicides",
 ];
-
-const FALLBACK_IMAGE = "/placeholder.png";
-
-function getSafeImageSrc(src?: string) {
-  const value = src?.trim();
-  return value ? value : FALLBACK_IMAGE;
-}
 
 function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -93,11 +85,6 @@ function ProductsContent() {
 
     return matchCategory && matchSearch;
   });
-
-  const getDiscount = (mrp?: number, price?: number) => {
-    if (!mrp || !price || mrp <= 0) return 0;
-    return Math.floor(((mrp - price) / mrp) * 100);
-  };
 
   const handleInquiry = async (product: Product) => {
     try {
@@ -256,89 +243,14 @@ function ProductsContent() {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8">
-              {filteredProducts.map((product) => {
-                const discount = getDiscount(product.mrp, product.price);
-
-                return (
-                  <div
-                    key={product._id}
-                    className="overflow-hidden rounded-2xl bg-white shadow transition hover:shadow-lg"
-                  >
-                    <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-xl bg-gray-50 sm:h-60">
-  <Image
-    src={getSafeImageSrc(product.image)}
-    alt={product.name}
-    fill
-    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-    className="object-contain p-4 transition-transform duration-300 hover:scale-105"
-  />
-
-
-                      {discount > 0 && (
-                        <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-md">
-                          {discount}% OFF
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-3 p-5 sm:p-6">
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-bold sm:text-xl">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">{product.category}</p>
-                      </div>
-
-                      {product.size && (
-                        <div>
-                          <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                            Size: {product.size}
-                          </span>
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <span className="text-xl font-extrabold text-green-600 sm:text-2xl">
-                          ₹ {product.price || "Contact"}
-                        </span>
-
-                        {product.mrp && (
-                          <span className="text-base text-gray-400 line-through sm:text-lg">
-                            ₹ {product.mrp}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="line-clamp-2 text-sm leading-6 text-gray-600">
-                        {product.usage ||
-                          product.description ||
-                          "Product details available on view page."}
-                      </p>
-
-                      <div className="mt-2 flex flex-col gap-2">
-                        <Link
-                          href={`/products/${product._id}`}
-                          className="rounded-lg border border-border py-2.5 text-center text-sm font-medium transition hover:bg-gray-50 sm:text-base"
-                        >
-                          View Details
-                        </Link>
-
-                        <button
-                          type="button"
-                          onClick={() => handleInquiry(product)}
-                          disabled={actionLoadingId === product._id}
-                          className="flex items-center justify-center gap-2 rounded-lg bg-green-500 py-3 text-sm font-bold text-white shadow-md transition hover:bg-green-600 disabled:opacity-70 sm:text-base"
-                        >
-                          <PhoneForwarded size={16} />
-                          {actionLoadingId === product._id
-                            ? "Opening WhatsApp..."
-                            : "WhatsApp Inquiry"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  onInquiry={handleInquiry}
+                  isLoading={actionLoadingId === product._id}
+                />
+              ))}
             </div>
 
             {filteredProducts.length === 0 && (
@@ -355,7 +267,9 @@ function ProductsContent() {
 
 export default function Products() {
   return (
-    <Suspense fallback={<div className="container-app py-10 text-center">Loading...</div>}>
+    <Suspense
+      fallback={<div className="container-app py-10 text-center">Loading...</div>}
+    >
       <ProductsContent />
     </Suspense>
   );
