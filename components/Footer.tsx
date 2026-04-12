@@ -1,110 +1,199 @@
 import Link from "next/link";
-import { Phone, Mail, MapPin, Leaf, Facebook, Instagram, Twitter } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Leaf,
+  Facebook,
+  Instagram,
+  Twitter,
+} from "lucide-react";
 import { BUSINESS_DETAILS } from "@/lib/constants";
 
 export default function Footer() {
-    return (
-        <footer className="bg-[#1a2e1a] text-white pt-16 pb-8">
-            <div className="container mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+  return (
+    <footer className="bg-[#1a2e1a] pb-8 pt-14 text-white sm:pt-16">
+      <div className="container-app">
+        <div className="grid grid-cols-1 gap-10 pb-10 sm:gap-12 lg:grid-cols-4">
+          <div className="space-y-4">
+            <Link href="/" className="flex items-center gap-3">
+              <Leaf className="h-9 w-9 shrink-0 text-[#a8e6cf] sm:h-10 sm:w-10" />
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+                  AANSHI
+                </span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-300 sm:text-[11px]">
+                  Fertilizers & Pesticides
+                </span>
+              </div>
+            </Link>
 
-                    {/* Brand */}
-                    <div className="space-y-4">
-                        <Link href="/" className="flex items-center gap-2">
-                            <Leaf className="text-[#a8e6cf] w-10 h-10" />
-                            <div className="flex flex-col">
-                                <span className="text-2xl font-bold tracking-tight">AANSHI</span>
-                                <span className="text-[10px] text-gray-300 font-medium tracking-[0.2em] uppercase">
-                                    Fertilizers & Pesticides
-                                </span>
-                            </div>
-                        </Link>
+            <p className="max-w-md text-sm leading-7 text-gray-300 sm:text-base">
+              15+ years of expertise in providing high-quality agricultural
+              solutions. Trusted by farmers across India.
+            </p>
 
-                        <p className="text-gray-400 leading-relaxed">
-                            15+ years of expertise in providing high-quality agricultural solutions. Trusted by farmers across India.
-                        </p>
-
-                        {/* Social */}
-                        <div className="flex gap-4">
-                            <Link href="#" className="hover:text-[#a8e6cf] transition-colors"><Facebook size={20} /></Link>
-                            <Link href="#" className="hover:text-[#a8e6cf] transition-colors"><Instagram size={20} /></Link>
-                            <Link href="#" className="hover:text-[#a8e6cf] transition-colors"><Twitter size={20} /></Link>
-                        </div>
-                    </div>
-
-                    {/* Quick Links */}
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-[#a8e6cf]">Quick Links</h4>
-                        <ul className="space-y-4 text-gray-400">
-                            <li><Link href="/about" className="hover:text-white">About Us</Link></li>
-                            <li><Link href="/products" className="hover:text-white">Our Products</Link></li>
-                            <li><Link href="/wholesale" className="hover:text-white">Wholesale Inquiry</Link></li>
-                            <li><Link href="/support" className="hover:text-white">Farmer Support</Link></li>
-                            <li><Link href="/contact" className="hover:text-white">Contact Us</Link></li>
-                        </ul>
-                    </div>
-
-                    {/* Categories (NOW WORKING FILTERS) */}
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-[#a8e6cf]">Categories</h4>
-                        <ul className="space-y-4 text-gray-400">
-                            <li><Link href="/products?category=Fertilizers" className="hover:text-white">Fertilizers</Link></li>
-                            <li><Link href="/products?category=Pesticides" className="hover:text-white">Pesticides</Link></li>
-                            <li><Link href="/products?category=Seeds" className="hover:text-white">Quality Seeds</Link></li>
-                            <li><Link href="/products?category=Organic" className="hover:text-white">Organic Products</Link></li>
-                        </ul>
-                    </div>
-
-                    {/* Contact Info */}
-                    <div>
-                        <h4 className="text-lg font-bold mb-6 text-[#a8e6cf]">Visit Us</h4>
-                        <ul className="space-y-4 text-gray-400">
-
-                            <li className="flex items-start gap-3">
-                                <MapPin className="text-[#a8e6cf] mt-1" size={18} />
-                                <span>{BUSINESS_DETAILS.address}</span>
-                            </li>
-
-                            {/* CLICK TO CALL */}
-                            <li className="flex items-center gap-3">
-                                <Phone className="text-[#a8e6cf]" size={18} />
-                                <a href={`tel:${BUSINESS_DETAILS.phone}`} className="hover:text-white">
-                                    {BUSINESS_DETAILS.phone}
-                                </a>
-                            </li>
-
-                            {/* EMAIL */}
-                            <li className="flex items-center gap-3">
-                                <Mail className="text-[#a8e6cf]" size={18} />
-                                <a href={`mailto:${BUSINESS_DETAILS.email}`} className="hover:text-white">
-                                    {BUSINESS_DETAILS.email}
-                                </a>
-                            </li>
-
-                            {/* WHATSAPP BUTTON (VERY IMPORTANT) */}
-                            <li className="pt-2">
-                                <a
-                                    href={`https://wa.me/${BUSINESS_DETAILS.whatsapp}?text=Hello, I want to inquire about your products.`}
-                                    target="_blank"
-                                    className="block text-center bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition-all"
-                                >
-                                    Chat on WhatsApp
-                                </a>
-                            </li>
-
-                        </ul>
-                    </div>
-                </div>
-
-                {/* Bottom */}
-                <div className="border-t border-white/10 pt-8 text-center text-gray-500 text-sm">
-                    <p>
-                        © {new Date().getFullYear()} Aanshi Fertilizers & Pesticides. All rights reserved.
-                        <br />
-                        Government Approved • Trusted by Farmers 🌱
-                    </p>
-                </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="#"
+                className="rounded-full p-2 text-gray-300 transition-colors hover:text-[#a8e6cf]"
+                aria-label="Facebook"
+              >
+                <Facebook size={20} />
+              </Link>
+              <Link
+                href="#"
+                className="rounded-full p-2 text-gray-300 transition-colors hover:text-[#a8e6cf]"
+                aria-label="Instagram"
+              >
+                <Instagram size={20} />
+              </Link>
+              <Link
+                href="#"
+                className="rounded-full p-2 text-gray-300 transition-colors hover:text-[#a8e6cf]"
+                aria-label="Twitter"
+              >
+                <Twitter size={20} />
+              </Link>
             </div>
-        </footer>
-    );
+          </div>
+
+          <div>
+            <h4 className="mb-5 text-lg font-bold text-[#a8e6cf]">
+              Quick Links
+            </h4>
+            <ul className="space-y-3 text-sm text-gray-300 sm:text-base">
+              <li>
+                <Link href="/about" className="transition-colors hover:text-white">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products"
+                  className="transition-colors hover:text-white"
+                >
+                  Our Products
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/wholesale"
+                  className="transition-colors hover:text-white"
+                >
+                  Wholesale Inquiry
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/support"
+                  className="transition-colors hover:text-white"
+                >
+                  Farmer Support
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="transition-colors hover:text-white"
+                >
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-5 text-lg font-bold text-[#a8e6cf]">
+              Categories
+            </h4>
+            <ul className="space-y-3 text-sm text-gray-300 sm:text-base">
+              <li>
+                <Link
+                  href="/products?category=Fertilizers"
+                  className="transition-colors hover:text-white"
+                >
+                  Fertilizers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=Pesticides"
+                  className="transition-colors hover:text-white"
+                >
+                  Pesticides
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=Seeds"
+                  className="transition-colors hover:text-white"
+                >
+                  Quality Seeds
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/products?category=Organic"
+                  className="transition-colors hover:text-white"
+                >
+                  Organic Products
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-5 text-lg font-bold text-[#a8e6cf]">Visit Us</h4>
+            <ul className="space-y-4 text-sm text-gray-300 sm:text-base">
+              <li className="flex items-start gap-3">
+                <MapPin className="mt-1 h-[18px] w-[18px] shrink-0 text-[#a8e6cf]" />
+                <span className="leading-6">{BUSINESS_DETAILS.address}</span>
+              </li>
+
+              <li className="flex items-center gap-3">
+                <Phone className="h-[18px] w-[18px] shrink-0 text-[#a8e6cf]" />
+                <a
+                  href={`tel:${BUSINESS_DETAILS.phone}`}
+                  className="break-words transition-colors hover:text-white"
+                >
+                  {BUSINESS_DETAILS.phone}
+                </a>
+              </li>
+
+              <li className="flex items-center gap-3">
+                <Mail className="h-[18px] w-[18px] shrink-0 text-[#a8e6cf]" />
+                <a
+                  href={`mailto:${BUSINESS_DETAILS.email}`}
+                  className="break-all transition-colors hover:text-white"
+                >
+                  {BUSINESS_DETAILS.email}
+                </a>
+              </li>
+
+              <li className="pt-2">
+                <a
+                  href={`https://wa.me/${BUSINESS_DETAILS.whatsapp}?text=Hello, I want to inquire about your products.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-xl bg-green-500 px-4 py-3 text-center text-sm font-bold text-white transition-all hover:bg-green-600 sm:text-base"
+                >
+                  Chat on WhatsApp
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-6 text-center text-xs leading-6 text-gray-400 sm:text-sm">
+          <p>
+            © {new Date().getFullYear()} Aanshi Fertilizers & Pesticides. All
+            rights reserved.
+            <br />
+            Government Approved • Trusted by Farmers 🌱
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
 }

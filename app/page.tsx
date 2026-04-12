@@ -58,74 +58,78 @@ export default function Home() {
 
   return (
     <div className="flex w-full flex-col">
-      {/* Hero Section */}
-      <section className="relative flex min-h-[80vh] items-center justify-center overflow-hidden pt-20">
+      <section className="relative flex min-h-[70vh] items-center overflow-hidden py-16 sm:min-h-[78vh] sm:py-20 lg:min-h-[82vh]">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1a2e1a]/90 to-transparent" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1a2e1a]/90 via-[#1a2e1a]/70 to-[#1a2e1a]/35" />
           <Image
             src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
             alt="Lush green field"
             fill
-            className="object-cover"
             priority
+            className="object-cover"
+            sizes="100vw"
           />
         </div>
 
-        <div className="container z-20 mx-auto px-4 text-white">
-          <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/20 px-4 py-2 text-sm font-semibold text-accent backdrop-blur-md">
-              <Award size={18} /> 15+ Years of Agriculture Excellence
+        <div className="container-app relative z-20 text-white">
+          <div className="max-w-4xl space-y-5 sm:space-y-6">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/20 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-md sm:text-sm">
+              <Award size={18} className="shrink-0" />
+              <span className="truncate">15+ Years of Agriculture Excellence</span>
             </div>
 
             {role === "owner" ? (
-              <h1 className="text-5xl font-bold leading-tight md:text-7xl">
-                Welcome Back, <br />
+              <h1 className="page-title max-w-3xl font-bold leading-tight text-white">
+                Welcome Back,
+                <br />
                 <span className="italic text-primary">
                   {user?.name || "Administrator"}
                 </span>
               </h1>
             ) : role === "user" ? (
-              <h1 className="text-5xl font-bold leading-tight md:text-7xl">
-                Hello, <br />
+              <h1 className="page-title max-w-3xl font-bold leading-tight text-white">
+                Hello,
+                <br />
                 <span className="italic text-primary">{user?.name}</span>
               </h1>
             ) : (
-              <h1 className="text-5xl font-bold leading-tight md:text-7xl">
-                Trusted Fertilizers & Pesticides Supplier <br />
+              <h1 className="page-title max-w-4xl font-bold leading-tight text-white">
+                Trusted Fertilizers & Pesticides Supplier
+                <br />
                 <span className="italic text-primary">
                   with 15+ Years of Experience
                 </span>
               </h1>
             )}
 
-            <p className="max-w-2xl text-xl leading-relaxed text-gray-200">
+            <p className="max-w-3xl text-base leading-7 text-gray-200 sm:text-lg sm:leading-8 lg:text-xl">
               Providing high-quality fertilizers, pesticides, and agricultural
               solutions to farmers and retailers across India. Government-certified
               products with trusted expertise of Anil Kumar Bishnoi.
             </p>
 
-            <p className="font-semibold text-green-300">
+            <p className="text-sm font-semibold text-green-300 sm:text-base">
               Led by Anil Kumar Bishnoi – 15+ years of trusted agricultural expertise
             </p>
 
-            <p className="mt-4 text-gray-300">
+            <p className="text-sm text-gray-300 sm:text-base">
               Established on <strong>22 May 2023</strong> • Growing trusted farmer
               community 🌱
             </p>
 
-            <div className="flex flex-wrap gap-4 pt-4">
+            <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4">
               {role === "owner" ? (
                 <>
                   <Link
                     href="/owner"
-                    className="flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-bold text-white transition-all hover:translate-x-1"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:translate-x-1 sm:px-8 sm:py-4 sm:text-base"
                   >
-                    Admin Dashboard <LayoutDashboard size={20} />
+                    Admin Dashboard <LayoutDashboard size={18} />
                   </Link>
 
                   <Link
                     href="/owner/orders"
-                    className="rounded-full bg-white px-8 py-4 text-lg font-bold text-primary transition-all hover:bg-gray-100"
+                    className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
                   >
                     View Inquiries
                   </Link>
@@ -134,22 +138,22 @@ export default function Home() {
                 <>
                   <Link
                     href="/products"
-                    className="flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-bold text-white transition-all hover:translate-x-1"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:translate-x-1 sm:px-8 sm:py-4 sm:text-base"
                   >
-                    Browse Products <ArrowRight size={20} />
+                    Browse Products <ArrowRight size={18} />
                   </Link>
 
                   {role === "user" ? (
                     <Link
                       href="/my-orders"
-                      className="flex items-center gap-2 rounded-full bg-white px-8 py-4 text-lg font-bold text-primary transition-all hover:bg-gray-100"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
                     >
-                      My Activity <Clock size={20} />
+                      My Activity <Clock size={18} />
                     </Link>
                   ) : (
                     <Link
                       href="/wholesale"
-                      className="rounded-full bg-white px-8 py-4 text-lg font-bold text-primary transition-all hover:bg-gray-100"
+                      className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
                     >
                       Wholesale Inquiry
                     </Link>
@@ -161,23 +165,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Role Specific Quick Actions */}
       {role === "owner" && (
-        <section className="border-b border-border bg-white py-12">
-          <div className="container mx-auto px-4">
-            <h2 className="mb-8 flex items-center gap-2 text-2xl font-bold text-foreground">
+        <section className="border-b border-border bg-white py-10 sm:py-12">
+          <div className="container-app">
+            <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-foreground sm:mb-8 sm:text-3xl">
               <ShieldCheck className="text-primary" /> Quick Admin Management
             </h2>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="safe-grid-3">
               <Link
                 href="/owner"
-                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-6 transition-all hover:border-primary/30"
+                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-5 transition-all hover:border-primary/30 sm:p-6"
               >
                 <div className="rounded-xl bg-primary p-3 text-white transition-transform group-hover:scale-110">
                   <ShoppingBag size={24} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold">Manage Products</h3>
                   <p className="text-sm text-gray-500">
                     Edit list, prices & images
@@ -187,12 +190,12 @@ export default function Home() {
 
               <Link
                 href="/owner/orders"
-                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-6 transition-all hover:border-primary/30"
+                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-5 transition-all hover:border-primary/30 sm:p-6"
               >
                 <div className="rounded-xl bg-primary p-3 text-white transition-transform group-hover:scale-110">
                   <Clock size={24} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold">Customer Inquiries</h3>
                   <p className="text-sm text-gray-500">
                     View latest WhatsApp requests
@@ -202,12 +205,12 @@ export default function Home() {
 
               <Link
                 href="/products"
-                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-6 transition-all hover:border-primary/30"
+                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-5 transition-all hover:border-primary/30 sm:p-6"
               >
                 <div className="rounded-xl bg-primary p-3 text-white transition-transform group-hover:scale-110">
                   <ArrowRight size={24} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="font-bold">Public View</h3>
                   <p className="text-sm text-gray-500">
                     See site as a customer
@@ -219,10 +222,9 @@ export default function Home() {
         </section>
       )}
 
-      {/* Standard Content */}
-      <section className="border-b border-border bg-[#f8faf8] py-12">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+      <section className="border-b border-border bg-[#f8faf8] py-10 sm:py-12">
+        <div className="container-app">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 xl:gap-8">
             {[
               {
                 icon: ShieldCheck,
@@ -245,12 +247,15 @@ export default function Home() {
                 sub: "Expert Guidance for Farmers",
               },
             ].map((stat, idx) => (
-              <div key={idx} className="group flex items-center gap-4">
+              <div
+                key={idx}
+                className="group flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm"
+              >
                 <div className="rounded-2xl border border-border bg-white p-3 shadow-sm transition-transform group-hover:scale-110">
-                  <stat.icon className="h-8 w-8 text-primary" />
+                  <stat.icon className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-foreground sm:text-lg">
                     {stat.label}
                   </h3>
                   <p className="text-sm text-gray-500">{stat.sub}</p>
@@ -261,19 +266,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Sections */}
-      <section className="bg-white py-24">
-        <div className="container mx-auto px-4">
-          <div className="mb-16 space-y-2 text-center">
-            <h2 className="text-4xl font-bold text-foreground">
+      <section className="bg-white py-16 sm:py-20 lg:py-24">
+        <div className="container-app">
+          <div className="mb-12 space-y-3 text-center sm:mb-16">
+            <h2 className="section-title font-bold text-foreground">
               Complete Farming Solutions
             </h2>
-            <p className="mx-auto max-w-2xl text-gray-600">
+            <p className="mx-auto max-w-2xl text-sm text-gray-600 sm:text-base">
               We offer standard and customized products for every Indian farmer.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="safe-grid-3">
             {[
               { title: "Fertilizers", icon: Wheat, value: "Fertilizers" },
               { title: "Crop Protection", icon: Beaker, value: "Pesticides" },
@@ -281,13 +285,13 @@ export default function Home() {
             ].map((cat, idx) => (
               <div
                 key={idx}
-                className="rounded-3xl border border-border bg-accent/20 p-8 text-center transition-all hover:shadow-lg"
+                className="rounded-3xl border border-border bg-accent/20 p-6 text-center transition-all hover:shadow-lg sm:p-8"
               >
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <cat.icon size={32} />
+                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-16 sm:w-16">
+                  <cat.icon size={30} />
                 </div>
 
-                <h3 className="mb-4 text-2xl font-bold">{cat.title}</h3>
+                <h3 className="mb-3 text-xl font-bold sm:text-2xl">{cat.title}</h3>
 
                 <Link
                   href={`/products?category=${cat.value}`}

@@ -1,7 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  Package,
+  Search,
+  ArrowLeft,
+  ShieldCheck,
+} from "lucide-react";
 
 type Product = {
   _id?: string;
@@ -15,26 +27,52 @@ type Product = {
   size?: string;
 };
 
-export default function AdminPage() {
+type AuthUser = {
+  _id?: string;
+  id?: string;
+  name: string;
+  role: string;
+};
+
+const CATEGORIES = [
+  "Fertilizers",
+  "Pesticides",
+  "Seeds",
+  "Plant Growth",
+  "Organic",
+  "Fungicides",
+];
+
+const FALLBACK_IMAGE = "/placeholder.png";
+
+function getSafeImageSrc(src?: string) {
+  const value = src?.trim();
+  return value ? value : FALLBACK_IMAGE;
+}
+
+const EMPTY_FORM: Product = {
+  name: "",
+  category: CATEGORIES[0],
+  mrp: 0,
+  price: 0,
+  usage: "",
+  description: "",
+  image: FALLBACK_IMAGE,
+  size: "",
+};
+
+export default function AdminProductsPage() {
+  const router = useRouter();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
-
-  const [form, setForm] = useState<Product>({
-    name: "",
-    category: "",
-    mrp: 0,
-    price: 0,
-    usage: "",
-    description: "",
-    image: "",
-    size: "",
-  });
-
+  const [pageLoading, setPageLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [form, setForm] = useState<Product>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // ✅ REAL AUTH CHECK (NO localStorage)
   useEffect(() => {
-    const checkOwnerAccess = async () => {
+    const init = async () => {
       try {
         const res = await fetch("/api/auth/me", {
           credentials: "include",
@@ -42,24 +80,28 @@ export default function AdminPage() {
         });
 
         if (!res.ok) {
-          window.location.href = "/login?redirect=/admin/products";
+          router.replace("/login?redirect=/admin/products");
           return;
         }
 
-        const user = await res.json();
+        const user: AuthUser = await res.json();
 
-        if (user.role !== "owner") {
-          window.location.href = "/";
+        if (user.role !== "owner" && user.role !== "admin") {
+          router.replace("/");
+          return;
         }
+
+        await fetchProducts();
       } catch {
-        window.location.href = "/login?redirect=/admin/products";
+        router.replace("/login?redirect=/admin/products");
+      } finally {
+        setPageLoading(false);
       }
     };
 
-    checkOwnerAccess();
-  }, []);
+    init();
+  }, [router]);
 
-  // ✅ FETCH PRODUCTS
   const fetchProducts = async () => {
     try {
       const res = await fetch("/api/products", {
@@ -67,32 +109,30 @@ export default function AdminPage() {
         cache: "no-store",
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => []);
       setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch products:", error);
       setProducts([]);
     }
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  // ✅ INPUT CHANGE
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === "price" || name === "mrp" ? Number(value) : value,
+      [name]: name === "price" || name === "mrp" ? Number(value) : value,
     }));
   };
 
-  // ✅ IMAGE UPLOAD (FIXED)
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+  };
+
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -112,10 +152,10 @@ export default function AdminPage() {
         credentials: "include",
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.secure_url) {
-        throw new Error(data?.error || "Upload failed");
+        throw new Error(data?.details || data?.error || "Upload failed");
       }
 
       setForm((prev) => ({
@@ -123,27 +163,24 @@ export default function AdminPage() {
         image: data.secure_url,
       }));
 
-      toast.success("Image uploaded ✅", { id: "upload" });
+      toast.success("Image uploaded successfully", { id: "upload" });
     } catch (error: any) {
-      toast.error(error?.message || "Upload failed ❌", {
-        id: "upload",
-      });
+      toast.error(error?.message || "Upload failed", { id: "upload" });
     } finally {
       setLoading(false);
       e.target.value = "";
     }
   };
 
-  // ✅ ADD / UPDATE PRODUCT
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!form.name || !form.category) {
-      toast.error("Required fields missing");
+    if (!form.name.trim() || !form.category.trim()) {
+      toast.error("Product name and category are required");
       return;
     }
 
-    toast.loading(editingId ? "Updating..." : "Adding...", {
+    toast.loading(editingId ? "Updating product..." : "Adding product...", {
       id: "save",
     });
 
@@ -157,6 +194,7 @@ export default function AdminPage() {
         size: form.size?.trim() || "",
         description: form.description?.trim() || "",
         usage: form.usage?.trim() || "",
+        image: getSafeImageSrc(form.image),
       };
 
       const res = await fetch(
@@ -175,35 +213,24 @@ export default function AdminPage() {
         throw new Error(data?.error || "Something went wrong");
       }
 
-      toast.success("Success ✅", { id: "save" });
+      toast.success(
+        editingId ? "Product updated successfully" : "Product added successfully",
+        { id: "save" }
+      );
 
-      setForm({
-        name: "",
-        category: "",
-        mrp: 0,
-        price: 0,
-        usage: "",
-        description: "",
-        image: "",
-        size: "",
-      });
-
-      setEditingId(null);
+      resetForm();
       await fetchProducts();
     } catch (error: any) {
-      toast.error(error?.message || "Something went wrong ❌", {
-        id: "save",
-      });
+      toast.error(error?.message || "Something went wrong", { id: "save" });
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ DELETE PRODUCT
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this product?")) return;
 
-    toast.loading("Deleting...", { id: "delete" });
+    toast.loading("Deleting product...", { id: "delete" });
 
     try {
       const res = await fetch(`/api/products/${id}`, {
@@ -217,197 +244,330 @@ export default function AdminPage() {
         throw new Error(data?.error || "Delete failed");
       }
 
-      toast.success("Deleted ✅", { id: "delete" });
+      toast.success("Product deleted", { id: "delete" });
+
+      if (editingId === id) {
+        resetForm();
+      }
+
       await fetchProducts();
     } catch (error: any) {
-      toast.error(error?.message || "Delete failed ❌", {
-        id: "delete",
-      });
+      toast.error(error?.message || "Delete failed", { id: "delete" });
     }
   };
 
-  // ✅ EDIT
   const handleEdit = (product: Product) => {
     setForm({
       name: product.name || "",
-      category: product.category || "",
+      category: product.category || CATEGORIES[0],
       mrp: product.mrp || 0,
       price: product.price || 0,
       usage: product.usage || "",
       description: product.description || "",
-      image: product.image || "",
+      image: getSafeImageSrc(product.image),
       size: product.size || "",
     });
 
     setEditingId(product._id || null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const filteredProducts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    if (!query) return products;
+
+    return products.filter((p) => {
+      const name = p.name?.toLowerCase() || "";
+      const category = p.category?.toLowerCase() || "";
+      const size = p.size?.toLowerCase() || "";
+      return (
+        name.includes(query) ||
+        category.includes(query) ||
+        size.includes(query)
+      );
+    });
+  }, [products, searchQuery]);
+
+  if (pageLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8faf8]">
+        <div className="flex items-center gap-3 text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading products panel...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-[#f8faf8] p-4 md:p-6">
       <Toaster position="top-right" />
 
-      <h1 className="mb-6 text-3xl font-bold">
-        Product Management
-      </h1>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+              <Package className="text-primary" />
+              Product Management
+            </h1>
+            <p className="mt-2 text-gray-500">
+              Add, edit, delete, and manage all business products from one place.
+            </p>
+          </div>
 
-      {/* FORM */}
-      <form
-        onSubmit={handleSubmit}
-        className="mb-10 grid gap-4 rounded-xl bg-white p-6 shadow"
-      >
-        <input
-          name="name"
-          placeholder="Product Name"
-          value={form.name}
-          onChange={handleChange}
-          className="rounded border p-2"
-          required
-        />
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => router.push("/admin")}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              <ArrowLeft size={16} />
+              Back to Admin
+            </button>
 
-        <input
-          name="category"
-          placeholder="Category"
-          value={form.category}
-          onChange={handleChange}
-          className="rounded border p-2"
-          required
-        />
+            <button
+              type="button"
+              onClick={resetForm}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-white hover:opacity-90"
+            >
+              <Plus size={16} />
+              New Product
+            </button>
+          </div>
+        </div>
 
-        <input
-          name="size"
-          placeholder="Size (1L, 5kg...)"
-          value={form.size || ""}
-          onChange={handleChange}
-          className="rounded border p-2"
-        />
+        <div className="mb-8 grid gap-6 lg:grid-cols-[420px_1fr]">
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-2xl border bg-white p-5 shadow-sm"
+          >
+            <div className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
+              <ShieldCheck size={18} className="text-primary" />
+              {editingId ? "Edit Product" : "Add Product"}
+            </div>
 
-        <input
-          name="mrp"
-          type="number"
-          placeholder="MRP"
-          value={form.mrp}
-          onChange={handleChange}
-          className="rounded border p-2"
-        />
+            <div className="space-y-4">
+              <input
+                name="name"
+                placeholder="Product Name"
+                value={form.name}
+                onChange={handleChange}
+                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                required
+              />
 
-        <input
-          name="price"
-          type="number"
-          placeholder="Offer Price"
-          value={form.price}
-          onChange={handleChange}
-          className="rounded border p-2"
-        />
+              <select
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                required
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
 
-        <input
-          name="usage"
-          placeholder="Usage"
-          value={form.usage}
-          onChange={handleChange}
-          className="rounded border p-2"
-        />
+              <input
+                name="size"
+                placeholder="Size (1L, 5kg...)"
+                value={form.size || ""}
+                onChange={handleChange}
+                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+              />
 
-        <textarea
-          name="description"
-          placeholder="Description"
-          value={form.description || ""}
-          onChange={handleChange}
-          rows={4}
-          className="rounded border p-2"
-        />
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  name="mrp"
+                  type="number"
+                  placeholder="MRP"
+                  value={form.mrp || 0}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                />
 
-        {/* ✅ PNG + JPG SUPPORT */}
-        <input
-          type="file"
-          accept="image/png, image/jpeg"
-          onChange={handleImageUpload}
-          className="rounded border p-2"
-        />
+                <input
+                  name="price"
+                  type="number"
+                  placeholder="Offer Price"
+                  value={form.price || 0}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                />
+              </div>
 
-        {form.image && (
-          <img
-            src={form.image}
-            className="h-20 w-20 object-cover rounded"
-          />
-        )}
+              <input
+                name="usage"
+                placeholder="Usage"
+                value={form.usage || ""}
+                onChange={handleChange}
+                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+              />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-green-600 py-2 text-white font-bold"
-        >
-          {loading
-            ? "Processing..."
-            : editingId
-            ? "Update Product"
-            : "Add Product"}
-        </button>
-      </form>
+              <textarea
+                name="description"
+                placeholder="Description"
+                value={form.description || ""}
+                onChange={handleChange}
+                rows={4}
+                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+              />
 
-      {/* TABLE */}
-      <div className="overflow-hidden rounded-xl bg-white shadow">
-        <table className="w-full">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="p-3">Image</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Size</th>
-              <th>MRP</th>
-              <th>Price</th>
-              <th>Discount</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg"
+                onChange={handleImageUpload}
+                className="w-full rounded-xl border p-3"
+              />
 
-          <tbody>
-            {products.map((p) => {
-              const discount =
-                p.mrp && p.price
-                  ? Math.floor(((p.mrp - p.price) / p.mrp) * 100)
-                  : 0;
+              <div className="flex items-center gap-4">
+                <div className="relative h-20 w-20 overflow-hidden rounded-xl border">
+                  <Image
+                    src={getSafeImageSrc(form.image)}
+                    alt="Preview"
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                </div>
 
-              return (
-                <tr key={p._id} className="border-t text-center">
-                  <td className="p-2">
-                    <img
-                      src={p.image || "/placeholder.png"}
-                      className="mx-auto h-12 w-12 object-cover"
-                    />
-                  </td>
+                <input
+                  name="image"
+                  placeholder="Or paste image URL"
+                  value={form.image || ""}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                />
+              </div>
 
-                  <td>{p.name}</td>
-                  <td>{p.category}</td>
-                  <td>{p.size || "-"}</td>
-                  <td>₹ {p.mrp}</td>
-                  <td>₹ {p.price}</td>
+              <div className="flex gap-3">
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="w-full rounded-xl border py-3 font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel Edit
+                  </button>
+                )}
 
-                  <td className="text-red-500 font-bold">
-                    {discount > 0 ? `${discount}%` : "-"}
-                  </td>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-xl bg-green-600 py-3 font-bold text-white hover:bg-green-700 disabled:opacity-70"
+                >
+                  {loading
+                    ? "Processing..."
+                    : editingId
+                    ? "Update Product"
+                    : "Add Product"}
+                </button>
+              </div>
+            </div>
+          </form>
 
-                  <td className="flex justify-center gap-2 py-2">
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(p)}
-                      className="bg-blue-500 text-white px-3 py-1 rounded"
-                    >
-                      Edit
-                    </button>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">
+                All Products ({filteredProducts.length})
+              </h2>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(p._id!)}
-                      className="bg-red-500 text-white px-3 py-1 rounded"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              <div className="relative w-full max-w-sm">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  placeholder="Search by name, category, size..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border py-2 pl-9 pr-3 outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="p-3 text-left">Image</th>
+                    <th className="p-3 text-left">Name</th>
+                    <th className="p-3 text-left">Category</th>
+                    <th className="p-3 text-left">Size</th>
+                    <th className="p-3 text-left">MRP</th>
+                    <th className="p-3 text-left">Price</th>
+                    <th className="p-3 text-left">Discount</th>
+                    <th className="p-3 text-left">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {filteredProducts.map((p) => {
+                    const discount =
+                      p.mrp && p.price && p.mrp > 0
+                        ? Math.floor(((p.mrp - p.price) / p.mrp) * 100)
+                        : 0;
+
+                    return (
+                      <tr key={p._id} className="border-t align-middle">
+                        <td className="p-3">
+                          <div className="relative h-12 w-12 overflow-hidden rounded-lg border">
+                            <Image
+                              src={getSafeImageSrc(p.image)}
+                              alt={p.name}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                          </div>
+                        </td>
+
+                        <td className="p-3 font-medium text-gray-900">{p.name}</td>
+                        <td className="p-3">{p.category}</td>
+                        <td className="p-3">{p.size || "-"}</td>
+                        <td className="p-3">₹ {p.mrp || 0}</td>
+                        <td className="p-3">₹ {p.price || 0}</td>
+                        <td className="p-3 font-bold text-red-500">
+                          {discount > 0 ? `${discount}%` : "-"}
+                        </td>
+
+                        <td className="p-3">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(p)}
+                              className="rounded-lg bg-blue-500 px-3 py-2 text-white hover:bg-blue-600"
+                            >
+                              <Pencil size={14} />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => p._id && handleDelete(p._id)}
+                              className="rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              {filteredProducts.length === 0 && (
+                <div className="py-10 text-center text-gray-400">
+                  No products found.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

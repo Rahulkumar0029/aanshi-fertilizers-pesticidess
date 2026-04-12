@@ -35,6 +35,10 @@ export default function Header() {
     fetchRole();
   }, [pathname]);
 
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
@@ -54,8 +58,7 @@ export default function Header() {
           { name: "Wholesale", href: "/wholesale" },
           { name: "Login", href: "/login" },
         ]
-      : []),
-  ];
+      : []) ] ;
 
   const handleLogout = async () => {
     try {
@@ -68,92 +71,100 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-white shadow-sm">
-      <div className="container mx-auto flex items-center justify-between px-4 py-4">
-        <Link href="/" className="flex items-center gap-2">
-          <Leaf className="h-8 w-8 text-primary" />
-          <div className="flex flex-col">
-            <span className="text-xl font-bold leading-tight text-primary">
-              AANSHI
-            </span>
-            <span className="text-xs font-medium uppercase tracking-wider text-secondary">
-              Fertilizers & Pesticides
-            </span>
-          </div>
-        </Link>
-
-        {/* Desktop Nav */}
-        <nav className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className="font-medium text-foreground transition-colors hover:text-primary"
-            >
-              {link.name}
-            </Link>
-          ))}
-
-          {role !== null && !loadingRole && (
-            <button
-              onClick={handleLogout}
-              className="cursor-pointer rounded-full bg-red-50 px-5 py-2 font-semibold text-red-600 transition-all hover:bg-red-100"
-            >
-              Logout
-            </button>
-          )}
-
-          <Link
-            href="/wholesale"
-            className="rounded-full bg-primary px-5 py-2 font-semibold text-white transition-all hover:opacity-90"
-          >
-            Wholesale Inquiry
+    <header className="sticky top-0 z-50 border-b border-border bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/85">
+      <div className="container-app">
+        <div className="flex min-h-16 items-center justify-between gap-3 py-3 sm:min-h-18 sm:py-4">
+          <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <Leaf className="h-7 w-7 shrink-0 text-primary sm:h-8 sm:w-8" />
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-lg font-bold leading-tight text-primary sm:text-xl">
+                AANSHI
+              </span>
+              <span className="truncate text-[10px] font-medium uppercase tracking-[0.18em] text-secondary sm:text-xs">
+                Fertilizers & Pesticides
+              </span>
+            </div>
           </Link>
-        </nav>
 
-        {/* Mobile Toggle */}
-        <button
-          className="text-foreground md:hidden"
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle menu"
-        >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+          <nav className="hidden items-center gap-5 xl:gap-7 lg:flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="whitespace-nowrap text-sm font-medium text-foreground transition-colors hover:text-primary"
+              >
+                {link.name}
+              </Link>
+            ))}
+
+            {role !== null && !loadingRole && (
+              <button
+                onClick={handleLogout}
+                className="cursor-pointer whitespace-nowrap rounded-full bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-100"
+              >
+                Logout
+              </button>
+            )}
+
+            <Link
+              href="/wholesale"
+              className="whitespace-nowrap rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90 xl:px-5"
+            >
+              Wholesale Inquiry
+            </Link>
+          </nav>
+
+          <button
+            className="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-foreground transition hover:bg-muted lg:hidden"
+            onClick={() => setIsOpen((prev) => !prev)}
+            aria-label="Toggle menu"
+            aria-expanded={isOpen}
+            aria-controls="mobile-menu"
+            type="button"
+          >
+            {isOpen ? <X size={26} /> : <Menu size={26} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Nav */}
       {isOpen && (
-        <nav className="animate-in slide-in-from-top flex flex-col gap-4 border-t border-border bg-white px-4 py-6 shadow-lg duration-300 md:hidden">
-          {navLinks.map((link) => (
+        <nav
+          id="mobile-menu"
+          className="border-t border-border bg-white shadow-lg lg:hidden"
+        >
+          <div className="container-app flex flex-col gap-1 py-4">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="rounded-lg px-3 py-3 text-base font-medium text-foreground transition-colors hover:bg-accent hover:text-primary"
+                onClick={() => setIsOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
+
+            {role !== null && !loadingRole && (
+              <button
+                onClick={async () => {
+                  setIsOpen(false);
+                  await handleLogout();
+                }}
+                className="rounded-lg px-3 py-3 text-left text-base font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                type="button"
+              >
+                Logout
+              </button>
+            )}
+
             <Link
-              key={link.name}
-              href={link.href}
-              className="border-b border-muted py-2 text-lg font-medium transition-colors hover:text-primary"
+              href="/wholesale"
+              className="mt-2 rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-white transition-all hover:opacity-90"
               onClick={() => setIsOpen(false)}
             >
-              {link.name}
+              Wholesale Inquiry
             </Link>
-          ))}
-
-          {role !== null && !loadingRole && (
-            <button
-              onClick={async () => {
-                setIsOpen(false);
-                await handleLogout();
-              }}
-              className="border-b border-muted py-2 text-left text-lg font-medium text-red-600 transition-colors hover:text-red-700"
-            >
-              Logout
-            </button>
-          )}
-
-          <Link
-            href="/wholesale"
-            className="mt-2 rounded-lg bg-primary py-3 text-center font-bold text-white"
-            onClick={() => setIsOpen(false)}
-          >
-            Wholesale Inquiry
-          </Link>
+          </div>
         </nav>
       )}
     </header>
