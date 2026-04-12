@@ -1,13 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { BUSINESS_DETAILS } from "@/lib/constants";
 import { buildProductInquiryMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 async function getProduct(id: string) {
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL;
+    const headerStore = headers();
+    const host = headerStore.get("x-forwarded-host") || headerStore.get("host");
+    const protocol = headerStore.get("x-forwarded-proto") || "https";
+
+    if (!host) {
+      return null;
+    }
+
+    const baseUrl = `${protocol}://${host}`;
 
     const res = await fetch(`${baseUrl}/api/products/${id}`, {
       cache: "no-store",
@@ -123,7 +131,9 @@ export default async function ProductDetails({
                 </div>
 
                 <div>
-                  <h3 className="mb-2 text-base font-semibold sm:text-lg">Usage</h3>
+                  <h3 className="mb-2 text-base font-semibold sm:text-lg">
+                    Usage
+                  </h3>
                   <p className="text-sm leading-7 text-gray-600 sm:text-base">
                     {product.usage?.trim() ||
                       "Use as per agricultural guidelines."}
@@ -135,10 +145,12 @@ export default async function ProductDetails({
                     Need quick help before ordering?
                   </p>
                   <p className="mt-2 leading-6">
-                    Message us on WhatsApp and our team will guide you with price,
-                    availability, usage, and purchase details.
+                    Message us on WhatsApp and our team will guide you with
+                    price, availability, usage, and purchase details.
                   </p>
-                  <p className="mt-3 break-words">WhatsApp: +91 {BUSINESS_DETAILS.phone}</p>
+                  <p className="mt-3 break-words">
+                    WhatsApp: +91 {BUSINESS_DETAILS.phone}
+                  </p>
                   <p className="break-all">Email: {BUSINESS_DETAILS.email}</p>
                 </div>
 
