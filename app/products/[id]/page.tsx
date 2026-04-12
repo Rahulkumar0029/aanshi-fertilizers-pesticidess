@@ -66,14 +66,14 @@ export default async function ProductDetails({
             </Link>
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
-              <div className="relative h-72 overflow-hidden rounded-xl bg-gray-100 sm:h-80 lg:min-h-[460px]">
-                <Image
-                  src={product.image || "/placeholder.png"}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                />
+             <div className="relative flex h-72 items-center justify-center overflow-hidden rounded-xl bg-gray-50 sm:h-80 lg:min-h-[460px]">
+  <Image
+    src={product.image || "/placeholder.png"}
+    alt={product.name}
+    fill
+    sizes="(max-width: 1024px) 100vw, 50vw"
+    className="object-contain p-6"
+  />
 
                 {discount > 0 && (
                   <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow sm:text-sm">

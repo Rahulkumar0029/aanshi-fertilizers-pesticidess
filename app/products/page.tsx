@@ -264,14 +264,15 @@ function ProductsContent() {
                     key={product._id}
                     className="overflow-hidden rounded-2xl bg-white shadow transition hover:shadow-lg"
                   >
-                    <div className="relative h-56 sm:h-60">
-                      <Image
-                        src={getSafeImageSrc(product.image)}
-                        alt={product.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover"
-                      />
+                    <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-xl bg-gray-50 sm:h-60">
+  <Image
+    src={getSafeImageSrc(product.image)}
+    alt={product.name}
+    fill
+    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+    className="object-contain p-4 transition-transform duration-300 hover:scale-105"
+  />
+
 
                       {discount > 0 && (
                         <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-md">
