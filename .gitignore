@@ -1,46 +1,94 @@
-# 🔐 CRITICAL SECURITY (DO NOT COMMIT)
-
-# All env files (already added but keep explicit)
+# ===============================
+# ENV & SECRETS (CRITICAL)
+# ===============================
 .env
 .env.*
 !.env.example
 
-# Local databases / backups
+# ===============================
+# NODE / NEXT
+# ===============================
+node_modules/
+.next/
+out/
+build/
+
+# ===============================
+# LOGS
+# ===============================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===============================
+# DATABASE / BACKUPS
+# ===============================
 *.sqlite
 *.db
 *.sql
 *.dump
 
-# Logs (can leak data)
-logs/
-*.log
-
-.next/
-out/
-
-# Uploads / media (Cloudinary handles storage)
+# ===============================
+# UPLOADS / MEDIA (USE CLOUDINARY)
+# ===============================
 public/uploads/
 public/temp/
 uploads/
 
-# OS / hidden sensitive files
+# ===============================
+# CACHE / TEMP FILES
+# ===============================
+.cache/
+.tmp/
+temp/
+tmp/
+
+# ===============================
+# OS FILES
+# ===============================
+.DS_Store
 Thumbs.db
 desktop.ini
 
-# IDE / local configs
+# ===============================
+# IDE / EDITOR
+# ===============================
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Certificates / keys
+# ===============================
+# CERTIFICATES / KEYS
+# ===============================
 *.key
 *.crt
 *.csr
+*.pem
 
-# API / secret configs (if created later)
+# ===============================
+# CONFIG SECRETS
+# ===============================
 config/secrets.*
 config/private.*
 
-# Cache
-.cache/
-.tmp/
-node_modules
+# ===============================
+# TYPESCRIPT
+# ===============================
+*.tsbuildinfo
+
+# ===============================
+# TEST / COVERAGE
+# ===============================
+coverage/
+.nyc_output/
+
+# ===============================
+# MISC
+# ===============================
+*.zip
+*.tar
+*.gz
