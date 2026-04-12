@@ -10,6 +10,15 @@ import {
   Loader2,
   Package,
   Search,
+  ShieldCheck,
+  ExternalLink,
+  Settings,
+  MessageSquare,
+  ShoppingBag,
+  BarChart3,
+  Image as ImageIcon,
+  LogOut,
+  ArrowRight,
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,7 +32,7 @@ interface Product {
   size: string;
   price: string;
   usage: string;
-  image: string;
+  image?: string;
   description?: string;
 }
 
@@ -45,6 +54,64 @@ const CATEGORIES = [
   "Fungicides",
 ];
 
+const FALLBACK_IMAGE = "/placeholder.png";
+
+const quickLinks = [
+  {
+    title: "Open Admin Panel",
+    description: "Go to the main admin control area.",
+    href: "/admin",
+    icon: ShieldCheck,
+    color: "text-primary",
+    bg: "bg-primary/10",
+  },
+  {
+    title: "Orders",
+    description: "Track WhatsApp and order leads.",
+    href: "/admin/orders",
+    icon: ShoppingBag,
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+  },
+  {
+    title: "Inquiries",
+    description: "Check customer and wholesale inquiries.",
+    href: "/admin/inquiries",
+    icon: MessageSquare,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
+  {
+    title: "Analytics",
+    description: "Review performance and business activity.",
+    href: "/admin/analytics",
+    icon: BarChart3,
+    color: "text-rose-600",
+    bg: "bg-rose-50",
+  },
+  {
+    title: "Banners",
+    description: "Manage homepage marketing banners.",
+    href: "/admin/banners",
+    icon: ImageIcon,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
+  {
+    title: "Settings",
+    description: "Update business details and dynamic content.",
+    href: "/admin/settings",
+    icon: Settings,
+    color: "text-slate-600",
+    bg: "bg-slate-50",
+  },
+];
+
+function getSafeImageSrc(src?: string) {
+  const value = src?.trim();
+  return value ? value : FALLBACK_IMAGE;
+}
+
 export default function OwnerDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,27 +131,27 @@ export default function OwnerDashboard() {
     price: "Contact for Pricing",
     description: "",
     usage: "",
-    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
+    image: FALLBACK_IMAGE,
   });
 
-  // ✅ REAL OWNER AUTH CHECK
   useEffect(() => {
     const checkAuthAndLoad = async () => {
       try {
         const authRes = await fetch("/api/auth/me", {
           method: "GET",
           credentials: "include",
+          cache: "no-store",
         });
 
         if (!authRes.ok) {
-          router.push("/login?redirect=/owner");
+          router.replace("/login?redirect=/owner");
           return;
         }
 
         const user: AuthUser = await authRes.json();
 
-        if (user.role !== "owner") {
-          router.push("/");
+        if (!user || user.role !== "owner") {
+          router.replace("/");
           return;
         }
 
@@ -92,7 +159,7 @@ export default function OwnerDashboard() {
         await fetchProducts();
       } catch (error) {
         console.error("Owner auth failed:", error);
-        router.push("/login?redirect=/owner");
+        router.replace("/login?redirect=/owner");
       } finally {
         setLoading(false);
       }
@@ -105,8 +172,10 @@ export default function OwnerDashboard() {
     try {
       const res = await fetch("/api/products", {
         credentials: "include",
+        cache: "no-store",
       });
-      const data = await res.json();
+
+      const data = await res.json().catch(() => []);
       setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch products", error);
@@ -114,11 +183,27 @@ export default function OwnerDashboard() {
     }
   }
 
-  // ✅ REAL LOGOUT
+  const goTo = (href: string) => {
+    router.push(href);
+  };
+
+  const openAddModal = () => {
+    setIsAdding(true);
+    setEditingProduct(null);
+    resetForm();
+  };
+
+  const closeModal = () => {
+    setIsAdding(false);
+    setEditingProduct(null);
+    resetForm();
+  };
+
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
+        credentials: "include",
       });
       router.push("/login");
       router.refresh();
@@ -136,7 +221,7 @@ export default function OwnerDashboard() {
       price: "Contact for Pricing",
       description: "",
       usage: "",
-      image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef",
+      image: FALLBACK_IMAGE,
     });
   };
 
@@ -145,24 +230,30 @@ export default function OwnerDashboard() {
     setFormLoading(true);
 
     try {
+      const payload = {
+        ...formData,
+        image: getSafeImageSrc(formData.image),
+      };
+
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        throw new Error("Failed to add product");
+        throw new Error(data?.error || "Failed to add product");
       }
 
       toast.success("Product added successfully");
-      setIsAdding(false);
-      resetForm();
+      closeModal();
       await fetchProducts();
     } catch (error) {
       console.error("Failed to add product", error);
-      toast.error("Failed to add product");
+      toast.error(error instanceof Error ? error.message : "Failed to add product");
     } finally {
       setFormLoading(false);
     }
@@ -175,24 +266,30 @@ export default function OwnerDashboard() {
     setFormLoading(true);
 
     try {
+      const payload = {
+        ...formData,
+        image: getSafeImageSrc(formData.image),
+      };
+
       const res = await fetch(`/api/products/${editingProduct._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        throw new Error("Failed to update product");
+        throw new Error(data?.error || "Failed to update product");
       }
 
       toast.success("Product updated successfully");
-      setEditingProduct(null);
-      resetForm();
+      closeModal();
       await fetchProducts();
     } catch (error) {
       console.error("Failed to update product", error);
-      toast.error("Failed to update product");
+      toast.error(error instanceof Error ? error.message : "Failed to update product");
     } finally {
       setFormLoading(false);
     }
@@ -217,22 +314,30 @@ export default function OwnerDashboard() {
         credentials: "include",
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
-      if (data.secure_url) {
-        setFormData((prev) => ({
-          ...prev,
-          image: data.secure_url,
-        }));
-        toast.success("Image uploaded ✅", { id: "upload" });
-      } else {
-        throw new Error("Upload failed");
+      if (!res.ok) {
+        throw new Error(data?.details || data?.error || "Upload failed");
       }
+
+      if (!data?.secure_url) {
+        throw new Error("Image URL missing after upload");
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        image: data.secure_url,
+      }));
+
+      toast.success("Image uploaded successfully", { id: "upload" });
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Upload failed ❌", { id: "upload" });
+      toast.error(error instanceof Error ? error.message : "Upload failed", {
+        id: "upload",
+      });
     } finally {
       setImageLoading(false);
+      e.target.value = "";
     }
   };
 
@@ -245,20 +350,23 @@ export default function OwnerDashboard() {
         credentials: "include",
       });
 
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        throw new Error("Failed to delete product");
+        throw new Error(data?.error || "Failed to delete product");
       }
 
       toast.success("Product deleted");
       await fetchProducts();
     } catch (error) {
       console.error("Failed to delete product", error);
-      toast.error("Failed to delete product");
+      toast.error(error instanceof Error ? error.message : "Failed to delete product");
     }
   };
 
   const startEditing = (product: Product) => {
     setEditingProduct(product);
+    setIsAdding(false);
     setFormData({
       name: product.name,
       category: product.category,
@@ -266,55 +374,96 @@ export default function OwnerDashboard() {
       price: product.price,
       description: product.description || "",
       usage: product.usage,
-      image: product.image,
+      image: getSafeImageSrc(product.image),
     });
-    setIsAdding(false);
   };
 
-  const filteredProducts = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter((p) => {
+    const name = p.name?.toLowerCase() || "";
+    const category = p.category?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+
+    return name.includes(query) || category.includes(query);
+  });
 
   return (
     <div className="min-h-screen bg-[#f8faf8] pb-20 pt-10">
       <Toaster position="top-right" />
 
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-center">
+        <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
           <div>
             <h1 className="flex items-center gap-3 text-4xl font-bold text-gray-900">
-              <Package className="text-primary" /> Owner Dashboard
+              <Package className="text-primary" />
+              Owner Dashboard
             </h1>
             <p className="mt-2 text-lg text-gray-500">
-              Welcome back, {ownerName}. Manage your agricultural product catalog.
+              Welcome back, {ownerName}. Manage products and access full business controls.
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => {
-                setIsAdding(true);
-                setEditingProduct(null);
-                resetForm();
-              }}
-              className="flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
+              type="button"
+              onClick={() => goTo("/")}
+              className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
             >
-              <Plus size={20} /> Add New Product
+              <ExternalLink size={18} />
+              View Website
             </button>
 
             <button
-              onClick={handleLogout}
-              className="rounded-2xl border border-gray-200 bg-white px-6 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
+              type="button"
+              onClick={() => goTo("/admin")}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
             >
+              <ShieldCheck size={18} />
+              Open Admin Panel
+            </button>
+
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
+            >
+              <Plus size={20} />
+              Add New Product
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-6 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
+            >
+              <LogOut size={18} />
               Logout
             </button>
           </div>
         </div>
 
-        {/* Search */}
+        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {quickLinks.map((item) => (
+            <button
+              key={item.title}
+              type="button"
+              onClick={() => goTo(item.href)}
+              className="group rounded-3xl border border-gray-100 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className={`mb-4 w-fit rounded-2xl p-4 ${item.bg} ${item.color}`}>
+                <item.icon size={24} />
+              </div>
+
+              <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
+              <p className="mt-2 text-sm text-gray-500">{item.description}</p>
+
+              <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary">
+                Open
+                <ArrowRight size={16} />
+              </div>
+            </button>
+          ))}
+        </div>
+
         <div className="relative mb-10 max-w-xl">
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
@@ -331,7 +480,6 @@ export default function OwnerDashboard() {
           />
         </div>
 
-        {/* Product List */}
         {loading ? (
           <div className="flex flex-col items-center justify-center gap-4 py-20">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -353,9 +501,10 @@ export default function OwnerDashboard() {
                 >
                   <div className="relative h-56 overflow-hidden">
                     <Image
-                      src={product.image}
+                      src={getSafeImageSrc(product.image)}
                       alt={product.name}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute left-4 top-4 rounded-full border border-primary/20 bg-white/90 px-3 py-1 text-xs font-bold text-primary backdrop-blur-sm">
@@ -367,6 +516,12 @@ export default function OwnerDashboard() {
                     <h3 className="mb-2 text-xl font-bold text-gray-900">
                       {product.name}
                     </h3>
+
+                    <div className="mb-3">
+                      <span className="text-lg font-bold text-primary">
+                        {product.price || "Contact for Pricing"}
+                      </span>
+                    </div>
 
                     <div className="mb-6 space-y-2">
                       <p className="text-sm text-gray-500">
@@ -386,13 +541,16 @@ export default function OwnerDashboard() {
 
                     <div className="mt-auto flex gap-3 border-t border-gray-50 pt-4">
                       <button
+                        type="button"
                         onClick={() => startEditing(product)}
                         className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent py-3 font-bold text-primary transition-all hover:bg-primary hover:text-white"
                       >
-                        <Pencil size={18} /> Edit
+                        <Pencil size={18} />
+                        Edit
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => handleDeleteProduct(product._id)}
                         className="rounded-xl bg-red-50 p-3 text-red-500 transition-all hover:bg-red-500 hover:text-white"
                       >
@@ -409,13 +567,12 @@ export default function OwnerDashboard() {
         {!loading && filteredProducts.length === 0 && (
           <div className="py-20 text-center">
             <p className="text-xl italic text-gray-400">
-              No products found. Start by adding one!
+              No products found. Start by adding one.
             </p>
           </div>
         )}
       </div>
 
-      {/* Form Overlay */}
       <AnimatePresence>
         {(isAdding || editingProduct) && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -423,11 +580,7 @@ export default function OwnerDashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => {
-                setIsAdding(false);
-                setEditingProduct(null);
-                resetForm();
-              }}
+              onClick={closeModal}
               className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             />
 
@@ -443,11 +596,8 @@ export default function OwnerDashboard() {
                 </h2>
 
                 <button
-                  onClick={() => {
-                    setIsAdding(false);
-                    setEditingProduct(null);
-                    resetForm();
-                  }}
+                  type="button"
+                  onClick={closeModal}
                   className="rounded-full p-2 transition-colors hover:bg-gray-100"
                 >
                   <X size={24} />
@@ -538,22 +688,21 @@ export default function OwnerDashboard() {
                         <input
                           type="file"
                           className="hidden"
-                          accept="image/*"
+                          accept="image/png,image/jpeg,image/jpg"
                           onChange={handleImageUpload}
                           disabled={imageLoading}
                         />
                       </label>
 
-                      {formData.image && (
-                        <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200">
-                          <Image
-                            src={formData.image}
-                            alt="Preview"
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      )}
+                      <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200">
+                        <Image
+                          src={getSafeImageSrc(formData.image)}
+                          alt="Preview"
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
                     </div>
 
                     <input
@@ -562,7 +711,10 @@ export default function OwnerDashboard() {
                       placeholder="Or paste Image URL"
                       value={formData.image}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setFormData({ ...formData, image: e.target.value })
+                        setFormData({
+                          ...formData,
+                          image: e.target.value.trim() || FALLBACK_IMAGE,
+                        })
                       }
                     />
                   </div>
@@ -603,11 +755,7 @@ export default function OwnerDashboard() {
                 <div className="flex gap-4 pt-4">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsAdding(false);
-                      setEditingProduct(null);
-                      resetForm();
-                    }}
+                    onClick={closeModal}
                     className="flex-1 rounded-2xl border border-gray-100 py-4 font-bold text-gray-600 transition-all hover:bg-gray-50"
                   >
                     Cancel
@@ -615,7 +763,7 @@ export default function OwnerDashboard() {
 
                   <button
                     type="submit"
-                    disabled={formLoading}
+                    disabled={formLoading || imageLoading}
                     className="flex-[2] rounded-2xl bg-primary py-4 text-lg font-bold text-white transition-all hover:shadow-xl hover:shadow-primary/30 disabled:opacity-70"
                   >
                     <span className="flex items-center justify-center gap-2">

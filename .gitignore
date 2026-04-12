@@ -15,6 +15,9 @@
 logs/
 *.log
 
+.next/
+out/
+
 # Uploads / media (Cloudinary handles storage)
 public/uploads/
 public/temp/
