@@ -162,30 +162,34 @@ export default function AdminHome() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
         <p className="text-sm text-gray-500">Loading admin panel...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 lg:p-10">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="min-h-screen bg-[#f8fafc] py-6 sm:py-8 lg:py-10">
+      <div className="container-app">
+        <div className="mb-8 flex flex-col gap-4 lg:mb-10 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-primary p-2 shadow-lg shadow-primary/20">
               <Leaf className="text-white" size={24} />
             </div>
-            <div>
-              <h1 className="text-2xl font-black text-gray-900">Aanshi Admin Panel</h1>
-              <p className="text-xs uppercase text-gray-400">Management Hub</p>
+            <div className="min-w-0">
+              <h1 className="text-xl font-black text-gray-900 sm:text-2xl">
+                Aanshi Admin Panel
+              </h1>
+              <p className="text-[11px] uppercase tracking-wider text-gray-400 sm:text-xs">
+                Management Hub
+              </p>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
             >
               <ExternalLink size={16} />
               View Website
@@ -194,7 +198,7 @@ export default function AdminHome() {
             {userRole === "owner" && (
               <Link
                 href="/owner"
-                className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10"
               >
                 <ShieldCheck size={16} />
                 Owner Panel
@@ -203,7 +207,8 @@ export default function AdminHome() {
 
             <button
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-xl border border-red-100 bg-white px-4 py-2 font-bold text-red-500 hover:bg-red-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-white px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50"
+              type="button"
             >
               <LogOut size={18} />
               Logout
@@ -211,44 +216,55 @@ export default function AdminHome() {
           </div>
         </div>
 
-        <div className="mb-8 rounded-3xl bg-white p-6 shadow-sm border">
-          <h2 className="text-3xl font-bold text-gray-900">
+        <div className="mb-8 rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             Welcome back, {adminName} 👋
           </h2>
-          <p className="mt-2 text-gray-500">
-            Manage products, orders, inquiries, marketing content, and business settings from one place.
+          <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-base">
+            Manage products, orders, inquiries, marketing content, and business
+            settings from one place.
           </p>
         </div>
 
-        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 lg:mb-10">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-gray-500">Total Products</p>
-            <h3 className="mt-2 text-3xl font-bold text-gray-900">{stats.products}</h3>
+            <h3 className="mt-2 text-3xl font-bold text-gray-900">
+              {stats.products}
+            </h3>
           </div>
 
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-gray-500">Total Orders</p>
-            <h3 className="mt-2 text-3xl font-bold text-gray-900">{stats.orders}</h3>
+            <h3 className="mt-2 text-3xl font-bold text-gray-900">
+              {stats.orders}
+            </h3>
           </div>
 
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-gray-500">Total Inquiries</p>
-            <h3 className="mt-2 text-3xl font-bold text-gray-900">{stats.inquiries}</h3>
+            <h3 className="mt-2 text-3xl font-bold text-gray-900">
+              {stats.inquiries}
+            </h3>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {sections.map((section) => (
             <Link
               key={section.name}
               href={section.path}
-              className="group rounded-3xl border bg-white p-8 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+              className="group rounded-3xl border bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:p-8"
             >
-              <div className={`mx-auto mb-4 w-fit rounded-2xl p-5 ${section.bg} ${section.color}`}>
-                <section.icon size={32} />
+              <div
+                className={`mx-auto mb-4 w-fit rounded-2xl p-4 sm:p-5 ${section.bg} ${section.color}`}
+              >
+                <section.icon size={30} />
               </div>
 
-              <h2 className="text-xl font-bold text-gray-800">{section.name}</h2>
+              <h2 className="text-lg font-bold text-gray-800 sm:text-xl">
+                {section.name}
+              </h2>
               <p className="mt-1 text-sm text-gray-400">
                 Manage all {section.name.toLowerCase()}
               </p>

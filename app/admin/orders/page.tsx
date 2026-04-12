@@ -154,125 +154,129 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-6">
       <Toaster position="top-right" />
 
-      <div className="mb-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-primary/10 p-3">
-            <ShoppingBag className="text-primary" size={32} />
+      <div className="container-app">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-2xl bg-primary/10 p-3">
+              <ShoppingBag className="text-primary" size={28} />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
+                Order Management
+              </h1>
+              <p className="text-sm leading-6 text-gray-500 sm:text-base">
+                Track and manage product orders.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">
-              Order Management
-            </h1>
-            <p className="text-gray-500">
-              Track and manage product orders.
-            </p>
-          </div>
+
+          <button
+            type="button"
+            onClick={() => router.push("/admin")}
+            className="inline-flex items-center justify-center gap-2 rounded border bg-white px-4 py-2"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/admin")}
-          className="flex items-center gap-2 rounded border bg-white px-4 py-2"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </button>
-      </div>
+        <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+          <div className="table-scroll">
+            <table className="min-w-[900px] w-full">
+              <thead className="border-b border-gray-100 bg-gray-50 text-left">
+                <tr>
+                  <th className="p-4 font-semibold text-gray-600">Customer</th>
+                  <th className="p-4 font-semibold text-gray-600">Product</th>
+                  <th className="p-4 font-semibold text-gray-600">Status</th>
+                  <th className="p-4 font-semibold text-gray-600">Date</th>
+                  <th className="p-4 font-semibold text-gray-600">Actions</th>
+                </tr>
+              </thead>
 
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <table className="w-full">
-          <thead className="border-b border-gray-100 bg-gray-50 text-left">
-            <tr>
-              <th className="p-4 font-semibold text-gray-600">Customer</th>
-              <th className="p-4 font-semibold text-gray-600">Product</th>
-              <th className="p-4 font-semibold text-gray-600">Status</th>
-              <th className="p-4 font-semibold text-gray-600">Date</th>
-              <th className="p-4 font-semibold text-gray-600">Actions</th>
-            </tr>
-          </thead>
+              <tbody className="divide-y divide-gray-100">
+                {orders.map((order) => (
+                  <tr key={order._id} className="hover:bg-gray-50">
+                    <td className="p-4">
+                      <p className="font-bold">{order.customerName || "Guest"}</p>
 
-          <tbody className="divide-y divide-gray-100">
-            {orders.map((order) => (
-              <tr key={order._id} className="hover:bg-gray-50">
-                <td className="p-4">
-                  <p className="font-bold">{order.customerName || "Guest"}</p>
+                      {order.phone && (
+                        <p className="text-sm text-gray-500">{order.phone}</p>
+                      )}
 
-                  {order.phone && (
-                    <p className="text-sm text-gray-500">{order.phone}</p>
-                  )}
+                      <p className="text-xs text-gray-400">
+                        ID: {order._id.slice(-6)}
+                      </p>
+                    </td>
 
-                  <p className="text-xs text-gray-400">
-                    ID: {order._id.slice(-6)}
-                  </p>
-                </td>
+                    <td className="p-4">
+                      <p className="font-medium">{order.productName}</p>
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                        {order.productCategory}
+                      </span>
+                    </td>
 
-                <td className="p-4">
-                  <p className="font-medium">{order.productName}</p>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                    {order.productCategory}
-                  </span>
-                </td>
+                    <td className="p-4">
+                      <select
+                        value={order.status}
+                        disabled={actionLoadingId === order._id}
+                        onChange={(e) =>
+                          updateStatus(
+                            order._id,
+                            e.target.value as Order["status"]
+                          )
+                        }
+                        className="rounded-lg border px-3 py-1.5 font-bold"
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                      </select>
+                    </td>
 
-                <td className="p-4">
-                  <select
-                    value={order.status}
-                    disabled={actionLoadingId === order._id}
-                    onChange={(e) =>
-                      updateStatus(
-                        order._id,
-                        e.target.value as Order["status"]
-                      )
-                    }
-                    className="rounded-lg px-3 py-1 font-bold"
-                  >
-                    <option value="Pending">Pending</option>
-                    <option value="Confirmed">Confirmed</option>
-                    <option value="Shipped">Shipped</option>
-                    <option value="Delivered">Delivered</option>
-                  </select>
-                </td>
+                    <td className="p-4 text-sm text-gray-500">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </td>
 
-                <td className="p-4 text-sm text-gray-500">
-                  {order.createdAt
-                    ? new Date(order.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </td>
+                    <td className="p-4">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleWhatsApp(order)}
+                          disabled={!order.phone || actionLoadingId === order._id}
+                          className="inline-flex items-center gap-2 rounded bg-green-500 px-3 py-2 text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <MessageSquare size={16} />
+                          WhatsApp
+                        </button>
 
-                <td className="p-4">
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleWhatsApp(order)}
-                      disabled={!order.phone || actionLoadingId === order._id}
-                      className="inline-flex items-center gap-2 rounded bg-green-500 px-3 py-2 text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <MessageSquare size={16} />
-                      WhatsApp
-                    </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(order._id)}
+                          disabled={actionLoadingId === order._id}
+                          className="inline-flex items-center gap-2 rounded bg-red-500 px-3 py-2 text-white hover:bg-red-600 disabled:opacity-70"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(order._id)}
-                      disabled={actionLoadingId === order._id}
-                      className="inline-flex items-center gap-2 rounded bg-red-500 px-3 py-2 text-white hover:bg-red-600 disabled:opacity-70"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {orders.length === 0 && (
-          <div className="py-20 text-center text-gray-400">
-            No orders found.
+            {orders.length === 0 && (
+              <div className="py-20 text-center text-gray-400">
+                No orders found.
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

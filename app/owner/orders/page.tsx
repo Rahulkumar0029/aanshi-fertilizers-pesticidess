@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, User, Package, ExternalLink, Filter, Search, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Clock,
+  User,
+  Package,
+  ExternalLink,
+  Filter,
+  Search,
+  AlertCircle,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function OwnerOrders() {
@@ -25,47 +33,54 @@ export default function OwnerOrders() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8faf8] pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        <header className="mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Customer Inquiries</h1>
-          <p className="text-gray-500">Manage and track all product interest requests from WhatsApp.</p>
+    <div className="min-h-screen bg-[#f8faf8] pb-12 pt-8 sm:pt-10 lg:pt-12">
+      <div className="container-app">
+        <header className="mb-8 sm:mb-10 lg:mb-12">
+          <h1 className="mb-2 text-2xl font-bold text-foreground sm:text-3xl lg:text-4xl">
+            Customer Inquiries
+          </h1>
+          <p className="text-sm leading-6 text-gray-500 sm:text-base">
+            Manage and track all product interest requests from WhatsApp.
+          </p>
         </header>
 
-        <div className="bg-white rounded-[2rem] shadow-sm border border-border overflow-hidden">
-          <div className="p-6 border-b border-border flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:w-96">
+        <div className="overflow-hidden rounded-[2rem] border border-border bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-border p-4 sm:p-6 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 type="text"
                 placeholder="Search by customer or product..."
-                className="w-full pl-10 pr-4 py-2 border border-border rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
+                className="w-full rounded-xl border border-border py-2.5 pl-10 pr-4 outline-none transition-all focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+
             <div className="flex items-center gap-2 text-sm font-medium text-gray-500">
               <Filter size={18} />
               <span>Filter: All Inquiries</span>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="table-scroll">
             {loading ? (
-              <div className="py-20 flex flex-col items-center gap-4">
-                <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                <p className="text-gray-500 italic">Fetching latest inquiries...</p>
+              <div className="flex flex-col items-center gap-4 py-20">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+                <p className="italic text-gray-500">Fetching latest inquiries...</p>
               </div>
             ) : filteredInquiries.length === 0 ? (
               <div className="py-20 text-center">
-                <div className="bg-accent/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent/30 text-primary">
                   <AlertCircle size={32} />
                 </div>
-                <h3 className="text-xl font-bold mb-2">No inquiries found</h3>
-                <p className="text-gray-500">When customers show interest in products, they will appear here.</p>
+                <h3 className="mb-2 text-lg font-bold sm:text-xl">No inquiries found</h3>
+                <p className="text-sm text-gray-500 sm:text-base">
+                  When customers show interest in products, they will appear here.
+                </p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse">
+              <table className="min-w-[900px] w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-accent/30">
                     <th className="p-4 font-bold text-gray-700">Customer</th>
@@ -79,41 +94,45 @@ export default function OwnerOrders() {
                   <AnimatePresence>
                     {filteredInquiries.map((iq) => (
                       <motion.tr
-                        key={iq._id} // ✅ Standardized to _id
+                        key={iq._id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="border-b border-border hover:bg-accent/10 transition-colors"
+                        className="border-b border-border transition-colors hover:bg-accent/10"
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                               <User size={16} />
                             </div>
                             <span className="font-semibold">{iq.userName}</span>
                           </div>
                         </td>
+
                         <td className="p-4">
                           <div className="flex flex-col">
-                            <span className="font-bold flex items-center gap-2">
+                            <span className="flex items-center gap-2 font-bold">
                               <Package size={14} className="text-gray-400" /> {iq.productName}
                             </span>
                             <span className="text-xs text-gray-500">{iq.productCategory}</span>
                           </div>
                         </td>
+
                         <td className="p-4">
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Clock size={14} />
                             {iq.timestamp ? new Date(iq.timestamp).toLocaleString() : "N/A"}
                           </div>
                         </td>
+
                         <td className="p-4">
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 border border-yellow-200">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-700">
                             {iq.status || "Pending"}
                           </span>
                         </td>
+
                         <td className="p-4">
-                          <button className="text-primary font-bold flex items-center gap-1 hover:underline">
+                          <button className="flex items-center gap-1 font-bold text-primary hover:underline">
                             Details <ExternalLink size={14} />
                           </button>
                         </td>

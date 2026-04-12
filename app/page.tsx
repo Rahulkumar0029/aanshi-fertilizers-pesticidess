@@ -58,9 +58,9 @@ export default function Home() {
 
   return (
     <div className="flex w-full flex-col">
-      <section className="relative flex min-h-[70vh] items-center overflow-hidden py-16 sm:min-h-[78vh] sm:py-20 lg:min-h-[82vh]">
+      <section className="relative flex min-h-[72vh] items-center overflow-hidden py-16 sm:min-h-[78vh] sm:py-20 lg:min-h-[84vh]">
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#1a2e1a]/90 via-[#1a2e1a]/70 to-[#1a2e1a]/35" />
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#08170d]/95 via-[#14351f]/82 to-[#1a2e1a]/50" />
           <Image
             src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
             alt="Lush green field"
@@ -73,48 +73,49 @@ export default function Home() {
 
         <div className="container-app relative z-20 text-white">
           <div className="max-w-4xl space-y-5 sm:space-y-6">
-            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/30 bg-primary/20 px-4 py-2 text-xs font-semibold text-accent backdrop-blur-md sm:text-sm">
+            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-green-400/20 bg-green-500/10 px-4 py-2 text-xs font-semibold text-green-100 backdrop-blur-md sm:text-sm">
               <Award size={18} className="shrink-0" />
-              <span className="truncate">15+ Years of Agriculture Excellence</span>
+              <span className="truncate">
+                Trusted Agricultural Solutions • 15+ Years of Experience
+              </span>
             </div>
 
-            {role === "owner" ? (
-              <h1 className="page-title max-w-3xl font-bold leading-tight text-white">
-                Welcome Back,
-                <br />
-                <span className="italic text-primary">
-                  {user?.name || "Administrator"}
-                </span>
-              </h1>
-            ) : role === "user" ? (
-              <h1 className="page-title max-w-3xl font-bold leading-tight text-white">
-                Hello,
-                <br />
-                <span className="italic text-primary">{user?.name}</span>
-              </h1>
-            ) : (
-              <h1 className="page-title max-w-4xl font-bold leading-tight text-white">
-                Trusted Fertilizers & Pesticides Supplier
-                <br />
-                <span className="italic text-primary">
-                  with 15+ Years of Experience
-                </span>
-              </h1>
+            {(role === "owner" || role === "user") && (
+              <p className="text-sm font-medium text-green-200 sm:text-base">
+                Welcome back, {user?.name}
+              </p>
             )}
 
-            <p className="max-w-3xl text-base leading-7 text-gray-200 sm:text-lg sm:leading-8 lg:text-xl">
-              Providing high-quality fertilizers, pesticides, and agricultural
-              solutions to farmers and retailers across India. Government-certified
-              products with trusted expertise of Anil Kumar Bishnoi.
+            <h1 className="max-w-4xl text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl xl:text-6xl">
+              Strong Crops Start With
+              <br />
+              <span className="text-green-400">
+                Trusted Fertilizers, Pesticides & Seeds
+              </span>
+            </h1>
+
+            <p className="max-w-2xl text-base leading-7 text-gray-200 sm:text-lg sm:leading-8 lg:text-xl">
+              Aanshi Fertilizers & Pesticides supplies reliable agricultural
+              products for farmers, retailers, and wholesale buyers with a focus
+              on quality, guidance, and long-term trust.
             </p>
 
-            <p className="text-sm font-semibold text-green-300 sm:text-base">
-              Led by Anil Kumar Bishnoi – 15+ years of trusted agricultural expertise
-            </p>
+            <div className="flex flex-wrap gap-3 text-sm font-medium text-green-200 sm:text-base">
+              <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
+                Government-approved product support
+              </span>
+              <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
+                Retail + wholesale supply
+              </span>
+              <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
+                Trusted guidance for farmers
+              </span>
+            </div>
 
-            <p className="text-sm text-gray-300 sm:text-base">
-              Established on <strong>22 May 2023</strong> • Growing trusted farmer
-              community 🌱
+            <p className="max-w-3xl text-sm font-semibold leading-6 text-green-300 sm:text-base">
+              Led by <span className="text-white">Anil Kumar Bishnoi</span> with
+              15+ years of agricultural experience, in partnership with{" "}
+              <span className="text-white">Anuj Bishnoi</span>.
             </p>
 
             <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4">

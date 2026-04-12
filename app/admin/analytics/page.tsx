@@ -33,9 +33,11 @@ function Card({
   valueClassName: string;
 }) {
   return (
-    <div className="rounded-xl bg-white p-6 text-center shadow">
-      <h2 className="text-gray-500">{title}</h2>
-      <p className={`text-3xl font-bold ${valueClassName}`}>{value}</p>
+    <div className="rounded-xl bg-white p-5 text-center shadow sm:p-6">
+      <h2 className="text-sm text-gray-500 sm:text-base">{title}</h2>
+      <p className={`mt-2 text-2xl font-bold sm:text-3xl ${valueClassName}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -163,103 +165,113 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Smart Analytics Dashboard</h1>
+    <div className="min-h-screen bg-gray-100 py-4 sm:py-6">
+      <div className="container-app">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-2xl font-bold sm:text-3xl">
+            Smart Analytics Dashboard
+          </h1>
 
-        <button
-          type="button"
-          onClick={() => router.push("/admin")}
-          className="flex items-center gap-2 rounded border bg-white px-4 py-2"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </button>
-      </div>
-
-      <div className="mb-6 flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow">
-        {["24h", "7d", "30d", "1y"].map((f) => (
           <button
-            key={f}
             type="button"
-            onClick={() => setFilter(f)}
-            className={`rounded-full px-4 py-2 font-semibold ${
-              filter === f ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
+            onClick={() => router.push("/admin")}
+            className="inline-flex items-center justify-center gap-2 rounded border bg-white px-4 py-2"
           >
-            {f}
+            <ArrowLeft size={16} />
+            Back
           </button>
-        ))}
+        </div>
 
-        <button
-          type="button"
-          onClick={() => setFilter("custom")}
-          className={`rounded-full px-4 py-2 ${
-            filter === "custom" ? "bg-purple-600 text-white" : "bg-gray-200"
-          }`}
-        >
-          Custom
-        </button>
+        <div className="mb-6 rounded-xl bg-white p-4 shadow">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap gap-3">
+              {["24h", "7d", "30d", "1y"].map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFilter(f)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold sm:text-base ${
+                    filter === f ? "bg-blue-600 text-white" : "bg-gray-200"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
 
-        {filter === "custom" && (
-          <div className="flex flex-wrap gap-2">
-            <input
-              type="date"
-              value={customStart}
-              onChange={(e) => setCustomStart(e.target.value)}
-              className="rounded border p-2"
-            />
-            <input
-              type="date"
-              value={customEnd}
-              onChange={(e) => setCustomEnd(e.target.value)}
-              className="rounded border p-2"
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="mb-8 grid gap-6 md:grid-cols-4">
-        <Card
-          title="Products Added"
-          value={filtered.products.length}
-          valueClassName="text-blue-600"
-        />
-        <Card
-          title="Inquiries"
-          value={filtered.inquiries.length}
-          valueClassName="text-green-600"
-        />
-        <Card
-          title="Orders"
-          value={filtered.orders.length}
-          valueClassName="text-orange-600"
-        />
-        <Card
-          title="Revenue"
-          value={`₹ ${totalRevenue}`}
-          valueClassName="text-purple-600"
-        />
-      </div>
-
-      <div className="rounded-xl bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-bold">Top Products</h2>
-
-        {topProducts.length === 0 ? (
-          <p className="text-gray-400">No data</p>
-        ) : (
-          <ul className="space-y-2">
-            {topProducts.map(([name, count]) => (
-              <li
-                key={name}
-                className="flex justify-between border-b pb-2"
+              <button
+                type="button"
+                onClick={() => setFilter("custom")}
+                className={`rounded-full px-4 py-2 text-sm sm:text-base ${
+                  filter === "custom" ? "bg-purple-600 text-white" : "bg-gray-200"
+                }`}
               >
-                <span>{name}</span>
-                <span className="font-bold text-blue-600">{count}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+                Custom
+              </button>
+            </div>
+
+            {filter === "custom" && (
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="rounded border p-2"
+                />
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="rounded border p-2"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Card
+            title="Products Added"
+            value={filtered.products.length}
+            valueClassName="text-blue-600"
+          />
+          <Card
+            title="Inquiries"
+            value={filtered.inquiries.length}
+            valueClassName="text-green-600"
+          />
+          <Card
+            title="Orders"
+            value={filtered.orders.length}
+            valueClassName="text-orange-600"
+          />
+          <Card
+            title="Revenue"
+            value={`₹ ${totalRevenue}`}
+            valueClassName="text-purple-600"
+          />
+        </div>
+
+        <div className="rounded-xl bg-white p-5 shadow sm:p-6">
+          <h2 className="mb-4 text-lg font-bold sm:text-xl">Top Products</h2>
+
+          {topProducts.length === 0 ? (
+            <p className="text-gray-400">No data</p>
+          ) : (
+            <ul className="space-y-2">
+              {topProducts.map(([name, count]) => (
+                <li
+                  key={name}
+                  className="flex items-center justify-between gap-4 border-b pb-2"
+                >
+                  <span className="min-w-0 break-words">{name}</span>
+                  <span className="shrink-0 font-bold text-blue-600">
+                    {count}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );

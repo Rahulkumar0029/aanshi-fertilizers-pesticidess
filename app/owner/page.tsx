@@ -387,26 +387,26 @@ export default function OwnerDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f8faf8] pb-20 pt-10">
+    <div className="min-h-screen bg-[#f8faf8] pb-14 pt-6 sm:pb-20 sm:pt-8">
       <Toaster position="top-right" />
 
-      <div className="container mx-auto px-4">
-        <div className="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-          <div>
-            <h1 className="flex items-center gap-3 text-4xl font-bold text-gray-900">
+      <div className="container-app">
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 sm:text-3xl lg:text-4xl">
               <Package className="text-primary" />
               Owner Dashboard
             </h1>
-            <p className="mt-2 text-lg text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-lg">
               Welcome back, {ownerName}. Manage products and access full business controls.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <button
               type="button"
               onClick={() => goTo("/")}
-              className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
             >
               <ExternalLink size={18} />
               View Website
@@ -415,7 +415,7 @@ export default function OwnerDashboard() {
             <button
               type="button"
               onClick={() => goTo("/admin")}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
             >
               <ShieldCheck size={18} />
               Open Admin Panel
@@ -424,7 +424,7 @@ export default function OwnerDashboard() {
             <button
               type="button"
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-105"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 font-bold text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
             >
               <Plus size={20} />
               Add New Product
@@ -433,7 +433,7 @@ export default function OwnerDashboard() {
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-white px-6 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-6 py-3 font-bold text-gray-600 transition-all hover:bg-gray-50"
             >
               <LogOut size={18} />
               Logout
@@ -441,20 +441,20 @@ export default function OwnerDashboard() {
           </div>
         </div>
 
-        <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 lg:mb-10">
           {quickLinks.map((item) => (
             <button
               key={item.title}
               type="button"
               onClick={() => goTo(item.href)}
-              className="group rounded-3xl border border-gray-100 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+              className="group rounded-3xl border border-gray-100 bg-white p-5 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl sm:p-6"
             >
               <div className={`mb-4 w-fit rounded-2xl p-4 ${item.bg} ${item.color}`}>
                 <item.icon size={24} />
               </div>
 
               <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
-              <p className="mt-2 text-sm text-gray-500">{item.description}</p>
+              <p className="mt-2 text-sm leading-6 text-gray-500">{item.description}</p>
 
               <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary">
                 Open
@@ -464,7 +464,7 @@ export default function OwnerDashboard() {
           ))}
         </div>
 
-        <div className="relative mb-10 max-w-xl">
+        <div className="relative mb-8 max-w-xl lg:mb-10">
           <Search
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
             size={20}
@@ -488,7 +488,7 @@ export default function OwnerDashboard() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 xl:gap-8">
             <AnimatePresence mode="popLayout">
               {filteredProducts.map((product) => (
                 <motion.div
@@ -499,12 +499,12 @@ export default function OwnerDashboard() {
                   key={product._id}
                   className="group flex flex-col overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transition-all hover:shadow-xl"
                 >
-                  <div className="relative h-56 overflow-hidden">
+                  <div className="relative h-52 overflow-hidden sm:h-56">
                     <Image
                       src={getSafeImageSrc(product.image)}
                       alt={product.name}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute left-4 top-4 rounded-full border border-primary/20 bg-white/90 px-3 py-1 text-xs font-bold text-primary backdrop-blur-sm">
@@ -512,28 +512,28 @@ export default function OwnerDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex flex-grow flex-col p-8">
-                    <h3 className="mb-2 text-xl font-bold text-gray-900">
+                  <div className="flex flex-grow flex-col p-5 sm:p-6 lg:p-8">
+                    <h3 className="mb-2 text-lg font-bold text-gray-900 sm:text-xl">
                       {product.name}
                     </h3>
 
                     <div className="mb-3">
-                      <span className="text-lg font-bold text-primary">
+                      <span className="text-lg font-bold text-primary sm:text-xl">
                         {product.price || "Contact for Pricing"}
                       </span>
                     </div>
 
                     <div className="mb-6 space-y-2">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm leading-6 text-gray-500">
                         <span className="font-semibold">Size:</span> {product.size || "-"}
                       </p>
 
-                      <p className="line-clamp-2 text-sm text-gray-500">
+                      <p className="line-clamp-2 text-sm leading-6 text-gray-500">
                         <span className="font-semibold">Description:</span>{" "}
                         {product.description?.trim() || "-"}
                       </p>
 
-                      <p className="line-clamp-2 text-sm text-gray-500">
+                      <p className="line-clamp-2 text-sm leading-6 text-gray-500">
                         <span className="font-semibold">Usage:</span>{" "}
                         {product.usage?.trim() || "-"}
                       </p>
@@ -566,7 +566,7 @@ export default function OwnerDashboard() {
 
         {!loading && filteredProducts.length === 0 && (
           <div className="py-20 text-center">
-            <p className="text-xl italic text-gray-400">
+            <p className="text-lg italic text-gray-400 sm:text-xl">
               No products found. Start by adding one.
             </p>
           </div>
@@ -575,7 +575,7 @@ export default function OwnerDashboard() {
 
       <AnimatePresence>
         {(isAdding || editingProduct) && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -588,10 +588,10 @@ export default function OwnerDashboard() {
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 50, scale: 0.9 }}
-              className="relative w-full max-w-2xl overflow-hidden rounded-[2.5rem] bg-white shadow-2xl"
+              className="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[2rem] bg-white shadow-2xl sm:rounded-[2.5rem]"
             >
-              <div className="flex items-center justify-between border-b border-gray-100 p-8">
-                <h2 className="text-2xl font-bold text-gray-900">
+              <div className="flex items-center justify-between border-b border-gray-100 p-5 sm:p-6 lg:p-8">
+                <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
                   {isAdding ? "Add New Product" : "Edit Product"}
                 </h2>
 
@@ -604,179 +604,181 @@ export default function OwnerDashboard() {
                 </button>
               </div>
 
-              <form
-                onSubmit={isAdding ? handleAddProduct : handleUpdateProduct}
-                className="space-y-6 p-8"
-              >
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="ml-1 text-sm font-semibold text-gray-700">
-                      Product Name
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      placeholder="e.g. Premium Urea"
-                      value={formData.name}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ml-1 text-sm font-semibold text-gray-700">
-                      Category
-                    </label>
-                    <select
-                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      value={formData.category}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                        setFormData({ ...formData, category: e.target.value })
-                      }
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ml-1 text-sm font-semibold text-gray-700">
-                      Available Sizes
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      placeholder="e.g. 1kg, 5kg"
-                      value={formData.size}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setFormData({ ...formData, size: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="ml-1 text-sm font-semibold text-gray-700">
-                      Price (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      placeholder="e.g. 500 or Contact"
-                      value={formData.price}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setFormData({ ...formData, price: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <label className="ml-1 text-sm font-semibold text-gray-700">
-                      Product Image
-                    </label>
-
-                    <div className="flex items-center gap-4">
-                      <label className="flex flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border border-primary border-dashed bg-white px-4 py-2 text-primary transition-all hover:bg-primary hover:text-white">
-                        <span className="text-sm font-bold">
-                          {imageLoading ? "Uploading..." : "Upload Image"}
-                        </span>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/png,image/jpeg,image/jpg"
-                          onChange={handleImageUpload}
-                          disabled={imageLoading}
-                        />
+              <div className="max-h-[calc(90vh-88px)] overflow-y-auto">
+                <form
+                  onSubmit={isAdding ? handleAddProduct : handleUpdateProduct}
+                  className="space-y-6 p-5 sm:p-6 lg:p-8"
+                >
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="ml-1 text-sm font-semibold text-gray-700">
+                        Product Name
                       </label>
-
-                      <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200">
-                        <Image
-                          src={getSafeImageSrc(formData.image)}
-                          alt="Preview"
-                          fill
-                          sizes="48px"
-                          className="object-cover"
-                        />
-                      </div>
+                      <input
+                        required
+                        type="text"
+                        className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="e.g. Premium Urea"
+                        value={formData.name}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                      />
                     </div>
 
-                    <input
-                      type="text"
-                      className="mt-2 w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-xs outline-none transition-all focus:ring-1 focus:ring-primary/20"
-                      placeholder="Or paste Image URL"
-                      value={formData.image}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setFormData({
-                          ...formData,
-                          image: e.target.value.trim() || FALLBACK_IMAGE,
-                        })
+                    <div className="space-y-2">
+                      <label className="ml-1 text-sm font-semibold text-gray-700">
+                        Category
+                      </label>
+                      <select
+                        className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        value={formData.category}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          setFormData({ ...formData, category: e.target.value })
+                        }
+                      >
+                        {CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="ml-1 text-sm font-semibold text-gray-700">
+                        Available Sizes
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="e.g. 1kg, 5kg"
+                        value={formData.size}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, size: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="ml-1 text-sm font-semibold text-gray-700">
+                        Price (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="e.g. 500 or Contact"
+                        value={formData.price}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({ ...formData, price: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="ml-1 text-sm font-semibold text-gray-700">
+                        Product Image
+                      </label>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                        <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-primary border-dashed bg-white px-4 py-3 text-primary transition-all hover:bg-primary hover:text-white sm:flex-1">
+                          <span className="text-sm font-bold">
+                            {imageLoading ? "Uploading..." : "Upload Image"}
+                          </span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept="image/png,image/jpeg,image/jpg"
+                            onChange={handleImageUpload}
+                            disabled={imageLoading}
+                          />
+                        </label>
+
+                        <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-gray-200">
+                          <Image
+                            src={getSafeImageSrc(formData.image)}
+                            alt="Preview"
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+
+                      <input
+                        type="text"
+                        className="mt-2 w-full rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-xs outline-none transition-all focus:ring-1 focus:ring-primary/20"
+                        placeholder="Or paste Image URL"
+                        value={formData.image}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setFormData({
+                            ...formData,
+                            image: e.target.value.trim() || FALLBACK_IMAGE,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="ml-1 text-sm font-semibold text-gray-700">
+                      Short Description
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      placeholder="Brief overview of the product..."
+                      value={formData.description}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setFormData({ ...formData, description: e.target.value })
                       }
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="ml-1 text-sm font-semibold text-gray-700">
-                    Short Description
-                  </label>
-                  <textarea
-                    required
-                    rows={2}
-                    className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="Brief overview of the product..."
-                    value={formData.description}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <label className="ml-1 text-sm font-semibold text-gray-700">
+                      Usage Guidelines
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      placeholder="How to apply this product..."
+                      value={formData.usage}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setFormData({ ...formData, usage: e.target.value })
+                      }
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <label className="ml-1 text-sm font-semibold text-gray-700">
-                    Usage Guidelines
-                  </label>
-                  <textarea
-                    required
-                    rows={2}
-                    className="w-full resize-none rounded-2xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="How to apply this product..."
-                    value={formData.usage}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setFormData({ ...formData, usage: e.target.value })
-                    }
-                  />
-                </div>
+                  <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:gap-4">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="flex-1 rounded-2xl border border-gray-100 py-4 font-bold text-gray-600 transition-all hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="flex-1 rounded-2xl border border-gray-100 py-4 font-bold text-gray-600 transition-all hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={formLoading || imageLoading}
-                    className="flex-[2] rounded-2xl bg-primary py-4 text-lg font-bold text-white transition-all hover:shadow-xl hover:shadow-primary/30 disabled:opacity-70"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      {formLoading ? (
-                        <Loader2 className="animate-spin" />
-                      ) : (
-                        <Save size={20} />
-                      )}
-                      {isAdding ? "Save Product" : "Update Product"}
-                    </span>
-                  </button>
-                </div>
-              </form>
+                    <button
+                      type="submit"
+                      disabled={formLoading || imageLoading}
+                      className="flex-[2] rounded-2xl bg-primary py-4 text-base font-bold text-white transition-all hover:shadow-xl hover:shadow-primary/30 disabled:opacity-70 sm:text-lg"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {formLoading ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <Save size={20} />
+                        )}
+                        {isAdding ? "Save Product" : "Update Product"}
+                      </span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </div>
         )}

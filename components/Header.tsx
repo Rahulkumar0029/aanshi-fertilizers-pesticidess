@@ -58,7 +58,8 @@ export default function Header() {
           { name: "Wholesale", href: "/wholesale" },
           { name: "Login", href: "/login" },
         ]
-      : []) ] ;
+      : []),
+  ];
 
   const handleLogout = async () => {
     try {
@@ -73,7 +74,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/85">
       <div className="container-app">
-        <div className="flex min-h-16 items-center justify-between gap-3 py-3 sm:min-h-18 sm:py-4">
+        <div className="flex min-h-16 items-center justify-between gap-3 py-3 sm:py-4">
           <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Leaf className="h-7 w-7 shrink-0 text-primary sm:h-8 sm:w-8" />
             <div className="flex min-w-0 flex-col">
@@ -86,7 +87,7 @@ export default function Header() {
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-5 xl:gap-7 lg:flex">
+          <nav className="hidden items-center gap-5 lg:flex xl:gap-7">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -101,6 +102,7 @@ export default function Header() {
               <button
                 onClick={handleLogout}
                 className="cursor-pointer whitespace-nowrap rounded-full bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-all hover:bg-red-100"
+                type="button"
               >
                 Logout
               </button>

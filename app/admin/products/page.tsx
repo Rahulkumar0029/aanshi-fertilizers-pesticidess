@@ -301,26 +301,26 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8faf8] p-4 md:p-6">
+    <div className="min-h-screen bg-[#f8faf8] py-4 sm:py-6">
       <Toaster position="top-right" />
 
-      <div className="mx-auto max-w-7xl">
+      <div className="container-app">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 sm:text-3xl">
               <Package className="text-primary" />
               Product Management
             </h1>
-            <p className="mt-2 text-gray-500">
+            <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-base">
               Add, edit, delete, and manage all business products from one place.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={() => router.push("/admin")}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50"
             >
               <ArrowLeft size={16} />
               Back to Admin
@@ -329,7 +329,7 @@ export default function AdminProductsPage() {
             <button
               type="button"
               onClick={resetForm}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 font-semibold text-white hover:opacity-90"
             >
               <Plus size={16} />
               New Product
@@ -337,10 +337,10 @@ export default function AdminProductsPage() {
           </div>
         </div>
 
-        <div className="mb-8 grid gap-6 lg:grid-cols-[420px_1fr]">
+        <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
           <form
             onSubmit={handleSubmit}
-            className="rounded-2xl border bg-white p-5 shadow-sm"
+            className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6"
           >
             <div className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
               <ShieldCheck size={18} className="text-primary" />
@@ -379,7 +379,7 @@ export default function AdminProductsPage() {
                 className="w-full rounded-xl border p-3 outline-none focus:border-primary"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <input
                   name="mrp"
                   type="number"
@@ -423,7 +423,7 @@ export default function AdminProductsPage() {
                 className="w-full rounded-xl border p-3"
               />
 
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="relative h-20 w-20 overflow-hidden rounded-xl border">
                   <Image
                     src={getSafeImageSrc(form.image)}
@@ -443,7 +443,7 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 {editingId && (
                   <button
                     type="button"
@@ -469,13 +469,13 @@ export default function AdminProductsPage() {
             </div>
           </form>
 
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
                 All Products ({filteredProducts.length})
               </h2>
 
-              <div className="relative w-full max-w-sm">
+              <div className="relative w-full lg:max-w-sm">
                 <Search
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={16}
@@ -490,8 +490,8 @@ export default function AdminProductsPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+            <div className="table-scroll">
+              <table className="min-w-[900px] text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
                     <th className="p-3 text-left">Image</th>
@@ -536,7 +536,7 @@ export default function AdminProductsPage() {
                         </td>
 
                         <td className="p-3">
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
                               onClick={() => handleEdit(p)}

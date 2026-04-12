@@ -86,14 +86,6 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/support"
-                  className="transition-colors hover:text-white"
-                >
-                  Farmer Support
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/contact"
                   className="transition-colors hover:text-white"
                 >
