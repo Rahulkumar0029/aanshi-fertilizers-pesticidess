@@ -7,13 +7,11 @@ import { buildProductInquiryMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
 async function getProduct(id: string) {
   try {
-    const headerStore = headers();
+    const headerStore = await headers();
     const host = headerStore.get("x-forwarded-host") || headerStore.get("host");
     const protocol = headerStore.get("x-forwarded-proto") || "https";
 
-    if (!host) {
-      return null;
-    }
+    if (!host) return null;
 
     const baseUrl = `${protocol}://${host}`;
 
