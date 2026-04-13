@@ -4,7 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendOTPEmail(to: string, otp: string) {
   try {
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: "Aanshi Support <support@aanshifarms.in>",
       to,
       subject: "Your OTP Code",
@@ -15,6 +15,9 @@ export async function sendOTPEmail(to: string, otp: string) {
         <p>This OTP is valid for 5 minutes.</p>
       `,
     });
+
+    console.log("EMAIL SENT:", result);
+    return result;
   } catch (error) {
     console.error("EMAIL ERROR:", error);
     throw new Error("Failed to send OTP");
