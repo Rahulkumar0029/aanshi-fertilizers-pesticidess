@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Leaf,
   ShieldCheck,
+  TrendingUp,
+  Loader2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,7 @@ import { useRouter } from "next/navigation";
 const sections = [
   {
     name: "Dashboard",
-    path: "/admin/dashboard",
+    path: "/admin",
     icon: LayoutDashboard,
     color: "text-blue-600",
     bg: "bg-blue-50",
@@ -82,6 +84,16 @@ type AdminStats = {
   inquiries: number;
 };
 
+type Inquiry = {
+  _id: string;
+  productName?: string;
+  userName?: string;
+  productCategory?: string;
+  status?: string;
+  timestamp?: string;
+  createdAt?: string;
+};
+
 export default function AdminHome() {
   const [adminName, setAdminName] = useState("Admin");
   const [userRole, setUserRole] = useState("owner");
@@ -90,6 +102,8 @@ export default function AdminHome() {
     orders: 0,
     inquiries: 0,
   });
+  const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const router = useRouter();
 
@@ -129,13 +143,21 @@ export default function AdminHome() {
           inquiriesRes.ok ? inquiriesRes.json() : [],
         ]);
 
+        const safeProducts = Array.isArray(productsData) ? productsData : [];
+        const safeOrders = Array.isArray(ordersData) ? ordersData : [];
+        const safeInquiries = Array.isArray(inquiriesData) ? inquiriesData : [];
+
         setStats({
-          products: Array.isArray(productsData) ? productsData.length : 0,
-          orders: Array.isArray(ordersData) ? ordersData.length : 0,
-          inquiries: Array.isArray(inquiriesData) ? inquiriesData.length : 0,
+          products: safeProducts.length,
+          orders: safeOrders.length,
+          inquiries: safeInquiries.length,
         });
+
+        setRecentInquiries(safeInquiries.slice(0, 5));
       } catch (error) {
         console.error("Failed to load admin data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -155,6 +177,21 @@ export default function AdminHome() {
       console.error("Logout failed:", error);
     }
   };
+
+  const engagementRate = Math.round(
+    (stats.inquiries / (stats.products || 1)) * 100
+  );
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+        <div className="flex items-center gap-3 text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading admin panel...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] py-6 sm:py-8 lg:py-10">
@@ -214,7 +251,7 @@ export default function AdminHome() {
           </p>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 lg:mb-10">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 lg:mb-10">
           <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-gray-500">Total Products</p>
             <h3 className="mt-2 text-3xl font-bold text-gray-900">
@@ -235,9 +272,22 @@ export default function AdminHome() {
               {stats.inquiries}
             </h3>
           </div>
+
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-gray-500">Activity</p>
+            <div className="mt-2 flex items-center gap-2">
+              <h3 className="text-3xl font-bold text-gray-900">
+                {engagementRate}%
+              </h3>
+              <TrendingUp className="text-green-500" size={20} />
+            </div>
+            <p className="mt-1 text-xs font-semibold text-green-600">
+              Engagement Rate
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 lg:mb-10">
           {sections.map((section) => (
             <Link
               key={section.name}
@@ -258,6 +308,67 @@ export default function AdminHome() {
               </p>
             </Link>
           ))}
+        </div>
+
+        <div className="rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-bold text-gray-800">
+              Recent Inquiries
+            </h2>
+
+            <Link
+              href="/admin/inquiries"
+              className="text-sm font-bold text-primary hover:underline"
+            >
+              View All
+            </Link>
+          </div>
+
+          {recentInquiries.length === 0 ? (
+            <div className="py-12 text-center">
+              <MessageSquare className="mx-auto mb-4 text-gray-200" size={48} />
+              <p className="text-gray-400 font-medium">
+                No recent inquiries to show.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentInquiries.map((inq, index) => (
+                <div
+                  key={inq._id || index}
+                  className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-gray-50/40 p-4 transition hover:bg-white hover:shadow-sm"
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-800">
+                      {inq.productName || "Unknown Product"}
+                    </p>
+                    <p className="truncate text-sm italic text-gray-500">
+                      by {inq.userName || "Customer"} •{" "}
+                      {inq.productCategory || "Unknown Category"}
+                    </p>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    <span
+                      className={`inline-block rounded-lg px-2 py-1 text-[10px] font-black uppercase ${
+                        inq.status === "pending"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      {inq.status || "pending"}
+                    </span>
+
+                    <p className="mt-2 text-[10px] text-gray-400">
+                      {new Date(
+                        inq.timestamp || inq.createdAt || Date.now()
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
