@@ -2,7 +2,7 @@ export const BUSINESS_DETAILS = {
   businessName: "Aanshi Fertilizers & Pesticides",
   ownerName: "Anil Kumar Bishnoi",
   phone: "+91 70146 39562",
-  whatsapp: "+91 70146 39562",
+  whatsapp: "917014639562",
   email: "aanshifarms@gmail.com",
   address: "30 Ps-A, Raisinghnagar, Sri Ganganagar, Rajasthan 335021",
   timings: "Mon-Sat, 9:00 AM - 8:00 PM",
