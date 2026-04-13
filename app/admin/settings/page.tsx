@@ -5,8 +5,8 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function SettingsPage() {
     const [settings, setSettings] = useState<any>({
-        contactPhone: "+91 94145 61129",
-        contactWhatsApp: "919414561129",
+        contactPhone: "+91 70146 39562",
+        contactWhatsApp: "917014639562",
         contactEmail: "info@aanshifertilizers.com",
         contactAddress: "Rajasthan, India",
     });
