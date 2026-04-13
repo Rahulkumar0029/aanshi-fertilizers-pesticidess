@@ -31,14 +31,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
       >
+        {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-E4R07WLCFP"
           strategy="afterInteractive"
@@ -52,15 +53,17 @@ export default function RootLayout({
           `}
         </Script>
 
+        {/* App Layout */}
         <div className="flex min-h-screen flex-col">
           <Toaster
             position="top-right"
-            toastOptions={{
-              duration: 4000,
-            }}
+            toastOptions={{ duration: 4000 }}
           />
+
           <Header />
+
           <main className="flex-1">{children}</main>
+
           <Footer />
         </div>
       </body>
