@@ -15,6 +15,22 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
+function getSafeRedirect(raw: string | null) {
+  if (!raw) return "/";
+
+  const value = raw.trim();
+
+  if (!value.startsWith("/")) return "/";
+  if (value.startsWith("//")) return "/";
+  if (value.includes("http://") || value.includes("https://")) return "/";
+  if (value.includes("login?redirect=")) return "/";
+
+  if (value.startsWith("/admin")) return "/admin";
+  if (value.startsWith("/owner")) return "/owner";
+
+  return value || "/";
+}
+
 function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -34,7 +50,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
 
   const redirectPath = useMemo(() => {
-    return searchParams.get("redirect") || "/";
+    return getSafeRedirect(searchParams.get("redirect"));
   }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -71,7 +87,11 @@ function LoginContent() {
       if (role === "owner") {
         router.push(redirectPath === "/" ? "/owner" : redirectPath);
       } else {
-        router.push(redirectPath);
+        router.push(
+          redirectPath.startsWith("/admin") || redirectPath.startsWith("/owner")
+            ? "/"
+            : redirectPath
+        );
       }
 
       router.refresh();
