@@ -1,310 +1,277 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
-  CheckCircle,
-  Truck,
-  Award,
-  ShieldCheck,
-  ArrowRight,
-  Wheat,
-  Beaker,
-  Sprout,
   LayoutDashboard,
+  Package,
   ShoppingBag,
-  Clock,
+  MessageSquare,
+  BarChart3,
+  Image as ImageIcon,
+  Settings,
+  LogOut,
+  ExternalLink,
+  Leaf,
+  ShieldCheck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+const sections = [
+  {
+    name: "Dashboard",
+    path: "/admin/dashboard",
+    icon: LayoutDashboard,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+  },
+  {
+    name: "Products",
+    path: "/admin/products",
+    icon: Package,
+    color: "text-green-600",
+    bg: "bg-green-50",
+  },
+  {
+    name: "Orders",
+    path: "/admin/orders",
+    icon: ShoppingBag,
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+  },
+  {
+    name: "Inquiries",
+    path: "/admin/inquiries",
+    icon: MessageSquare,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
+  {
+    name: "Analytics",
+    path: "/admin/analytics",
+    icon: BarChart3,
+    color: "text-rose-600",
+    bg: "bg-rose-50",
+  },
+  {
+    name: "Banners",
+    path: "/admin/banners",
+    icon: ImageIcon,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
+  {
+    name: "Settings",
+    path: "/admin/settings",
+    icon: Settings,
+    color: "text-slate-600",
+    bg: "bg-slate-50",
+  },
+];
 
 type AuthUser = {
   _id?: string;
   id?: string;
   name: string;
-  email?: string;
-  phone?: string;
   role: string;
 };
 
-export default function Home() {
-  const [role, setRole] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+type AdminStats = {
+  products: number;
+  orders: number;
+  inquiries: number;
+};
+
+export default function AdminHome() {
+  const [adminName, setAdminName] = useState("Admin");
+  const [userRole, setUserRole] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [stats, setStats] = useState<AdminStats>({
+    products: 0,
+    orders: 0,
+    inquiries: 0,
+  });
+
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchAuthUser = async () => {
+    const loadAdminData = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
+        const authRes = await fetch("/api/auth/me", {
+          method: "GET",
           credentials: "include",
           cache: "no-store",
         });
 
-        if (!res.ok) {
-          setRole(null);
-          setUser(null);
+        if (!authRes.ok) {
+          router.replace("/login?redirect=/admin");
           return;
         }
 
-        const data: AuthUser = await res.json();
-        setRole(data.role || null);
-        setUser(data);
-      } catch {
-        setRole(null);
-        setUser(null);
+        const user: AuthUser = await authRes.json();
+
+        if (!user || (user.role !== "admin" && user.role !== "owner")) {
+          router.replace("/");
+          return;
+        }
+
+        setAdminName(user.name || "Admin");
+        setUserRole(user.role);
+
+        const [productsRes, ordersRes, inquiriesRes] = await Promise.all([
+          fetch("/api/products", { credentials: "include", cache: "no-store" }),
+          fetch("/api/orders", { credentials: "include", cache: "no-store" }),
+          fetch("/api/inquiries", { credentials: "include", cache: "no-store" }),
+        ]);
+
+        const [productsData, ordersData, inquiriesData] = await Promise.all([
+          productsRes.ok ? productsRes.json() : [],
+          ordersRes.ok ? ordersRes.json() : [],
+          inquiriesRes.ok ? inquiriesRes.json() : [],
+        ]);
+
+        setStats({
+          products: Array.isArray(productsData) ? productsData.length : 0,
+          orders: Array.isArray(ordersData) ? ordersData.length : 0,
+          inquiries: Array.isArray(inquiriesData) ? inquiriesData.length : 0,
+        });
+      } catch (error) {
+        console.error("Failed to load admin data:", error);
+        router.replace("/login?redirect=/admin");
+      } finally {
+        setCheckingAuth(false);
       }
     };
 
-    fetchAuthUser();
-  }, []);
+    loadAdminData();
+  }, [router]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      router.push("/login");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  if (checkingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+        <p className="text-sm text-gray-500">Loading admin panel...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex w-full flex-col">
-      <section className="relative flex min-h-[72vh] items-center overflow-hidden py-16 sm:min-h-[78vh] sm:py-20 lg:min-h-[84vh]">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-[#08170d]/95 via-[#14351f]/82 to-[#1a2e1a]/50" />
-          <Image
-            src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-            alt="Lush green field"
-            fill
-            priority
-            className="object-cover"
-            sizes="100vw"
-          />
-        </div>
-
-        <div className="container-app relative z-20 text-white">
-          <div className="max-w-4xl space-y-5 sm:space-y-6">
-            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-green-400/20 bg-green-500/10 px-4 py-2 text-xs font-semibold text-green-100 backdrop-blur-md sm:text-sm">
-              <Award size={18} className="shrink-0" />
-              <span className="truncate">
-                Trusted Agricultural Solutions • 15+ Years of Experience
-              </span>
+    <div className="min-h-screen bg-[#f8fafc] py-6 sm:py-8 lg:py-10">
+      <div className="container-app">
+        <div className="mb-8 flex flex-col gap-4 lg:mb-10 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary p-2 shadow-lg shadow-primary/20">
+              <Leaf className="text-white" size={24} />
             </div>
-
-            {(role === "owner" || role === "user") && (
-              <p className="text-sm font-medium text-green-200 sm:text-base">
-                Welcome back, {user?.name}
+            <div className="min-w-0">
+              <h1 className="text-xl font-black text-gray-900 sm:text-2xl">
+                Aanshi Admin Panel
+              </h1>
+              <p className="text-[11px] uppercase tracking-wider text-gray-400 sm:text-xs">
+                Management Hub
               </p>
-            )}
-
-            <h1 className="max-w-4xl text-3xl font-extrabold leading-tight text-white sm:text-4xl lg:text-5xl xl:text-6xl">
-              Strong Crops Start With
-              <br />
-              <span className="text-green-400">
-                Trusted Fertilizers, Pesticides & Seeds
-              </span>
-            </h1>
-
-            <p className="max-w-2xl text-base leading-7 text-gray-200 sm:text-lg sm:leading-8 lg:text-xl">
-              Aanshi Fertilizers & Pesticides supplies reliable agricultural
-              products for farmers, retailers, and wholesale buyers with a focus
-              on quality, guidance, and long-term trust.
-            </p>
-
-            <div className="flex flex-wrap gap-3 text-sm font-medium text-green-200 sm:text-base">
-              <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
-                Government-approved product support
-              </span>
-              <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
-                Retail + wholesale supply
-              </span>
-              <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">
-                Trusted guidance for farmers
-              </span>
-            </div>
-
-            <p className="max-w-3xl text-sm font-semibold leading-6 text-green-300 sm:text-base">
-              Led by <span className="text-white">Anil Kumar Bishnoi</span> with
-              15+ years of agricultural experience, in partnership with{" "}
-              <span className="text-white">Anuj Bishnoi</span>.
-            </p>
-
-            <div className="flex flex-col gap-3 pt-3 sm:flex-row sm:flex-wrap sm:gap-4">
-              {role === "owner" ? (
-                <>
-                  <Link
-                    href="/owner"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:translate-x-1 sm:px-8 sm:py-4 sm:text-base"
-                  >
-                    Admin Dashboard <LayoutDashboard size={18} />
-                  </Link>
-
-                  <Link
-                    href="/owner/orders"
-                    className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
-                  >
-                    View Inquiries
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/products"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:translate-x-1 sm:px-8 sm:py-4 sm:text-base"
-                  >
-                    Browse Products <ArrowRight size={18} />
-                  </Link>
-
-                  {role === "user" ? (
-                    <Link
-                      href="/my-orders"
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
-                    >
-                      My Activity <Clock size={18} />
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/wholesale"
-                      className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
-                    >
-                      Wholesale Inquiry
-                    </Link>
-                  )}
-                </>
-              )}
             </div>
           </div>
-        </div>
-      </section>
 
-      {role === "owner" && (
-        <section className="border-b border-border bg-white py-10 sm:py-12">
-          <div className="container-app">
-            <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-foreground sm:mb-8 sm:text-3xl">
-              <ShieldCheck className="text-primary" /> Quick Admin Management
-            </h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-50"
+            >
+              <ExternalLink size={16} />
+              View Website
+            </Link>
 
-            <div className="safe-grid-3">
+            {userRole === "owner" && (
               <Link
                 href="/owner"
-                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-5 transition-all hover:border-primary/30 sm:p-6"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/10"
               >
-                <div className="rounded-xl bg-primary p-3 text-white transition-transform group-hover:scale-110">
-                  <ShoppingBag size={24} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold">Manage Products</h3>
-                  <p className="text-sm text-gray-500">
-                    Edit list, prices & images
-                  </p>
-                </div>
+                <ShieldCheck size={16} />
+                Owner Panel
               </Link>
+            )}
 
-              <Link
-                href="/owner/orders"
-                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-5 transition-all hover:border-primary/30 sm:p-6"
-              >
-                <div className="rounded-xl bg-primary p-3 text-white transition-transform group-hover:scale-110">
-                  <Clock size={24} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold">Customer Inquiries</h3>
-                  <p className="text-sm text-gray-500">
-                    View latest WhatsApp requests
-                  </p>
-                </div>
-              </Link>
-
-              <Link
-                href="/products"
-                className="group flex items-center gap-4 rounded-2xl border border-primary/10 bg-accent/30 p-5 transition-all hover:border-primary/30 sm:p-6"
-              >
-                <div className="rounded-xl bg-primary p-3 text-white transition-transform group-hover:scale-110">
-                  <ArrowRight size={24} />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold">Public View</h3>
-                  <p className="text-sm text-gray-500">
-                    See site as a customer
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      <section className="border-b border-border bg-[#f8faf8] py-10 sm:py-12">
-        <div className="container-app">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 xl:gap-8">
-            {[
-              {
-                icon: ShieldCheck,
-                label: "Government Certified",
-                sub: "Fully Licensed & Approved Products",
-              },
-              {
-                icon: Truck,
-                label: "All India Supply",
-                sub: "Fast & Reliable Delivery Anywhere",
-              },
-              {
-                icon: CheckCircle,
-                label: "Top Quality Products",
-                sub: "From Trusted Agricultural Brands",
-              },
-              {
-                icon: Award,
-                label: "15+ Years Experience",
-                sub: "Expert Guidance for Farmers",
-              },
-            ].map((stat, idx) => (
-              <div
-                key={idx}
-                className="group flex items-start gap-4 rounded-2xl bg-white p-5 shadow-sm"
-              >
-                <div className="rounded-2xl border border-border bg-white p-3 shadow-sm transition-transform group-hover:scale-110">
-                  <stat.icon className="h-7 w-7 text-primary sm:h-8 sm:w-8" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-bold text-foreground sm:text-lg">
-                    {stat.label}
-                  </h3>
-                  <p className="text-sm text-gray-500">{stat.sub}</p>
-                </div>
-              </div>
-            ))}
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-100 bg-white px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50"
+              type="button"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
           </div>
         </div>
-      </section>
 
-      <section className="bg-white py-16 sm:py-20 lg:py-24">
-        <div className="container-app">
-          <div className="mb-12 space-y-3 text-center sm:mb-16">
-            <h2 className="section-title font-bold text-foreground">
-              Complete Farming Solutions
-            </h2>
-            <p className="mx-auto max-w-2xl text-sm text-gray-600 sm:text-base">
-              We offer standard and customized products for every Indian farmer.
-            </p>
+        <div className="mb-8 rounded-3xl border bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            Welcome back, {adminName} 👋
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-base">
+            Manage products, orders, inquiries, marketing content, and business
+            settings from one place.
+          </p>
+        </div>
+
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 lg:mb-10">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-gray-500">Total Products</p>
+            <h3 className="mt-2 text-3xl font-bold text-gray-900">
+              {stats.products}
+            </h3>
           </div>
 
-          <div className="safe-grid-3">
-            {[
-              { title: "Fertilizers", icon: Wheat, value: "Fertilizers" },
-              { title: "Crop Protection", icon: Beaker, value: "Pesticides" },
-              { title: "Seeds", icon: Sprout, value: "Seeds" },
-            ].map((cat, idx) => (
-              <div
-                key={idx}
-                className="rounded-3xl border border-border bg-accent/20 p-6 text-center transition-all hover:shadow-lg sm:p-8"
-              >
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-16 sm:w-16">
-                  <cat.icon size={30} />
-                </div>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-gray-500">Total Orders</p>
+            <h3 className="mt-2 text-3xl font-bold text-gray-900">
+              {stats.orders}
+            </h3>
+          </div>
 
-                <h3 className="mb-3 text-xl font-bold sm:text-2xl">{cat.title}</h3>
-
-                <Link
-                  href={`/products?category=${cat.value}`}
-                  className="font-bold text-primary hover:underline"
-                >
-                  View Catalog
-                </Link>
-              </div>
-            ))}
+          <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-gray-500">Total Inquiries</p>
+            <h3 className="mt-2 text-3xl font-bold text-gray-900">
+              {stats.inquiries}
+            </h3>
           </div>
         </div>
-      </section>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {sections.map((section) => (
+            <Link
+              key={section.name}
+              href={section.path}
+              className="group rounded-3xl border bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:p-8"
+            >
+              <div
+                className={`mx-auto mb-4 w-fit rounded-2xl p-4 sm:p-5 ${section.bg} ${section.color}`}
+              >
+                <section.icon size={30} />
+              </div>
+
+              <h2 className="text-lg font-bold text-gray-800 sm:text-xl">
+                {section.name}
+              </h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Manage all {section.name.toLowerCase()}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
