@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/lib/models/Product";
 import mongoose from "mongoose";
+import { requireOwner } from "@/lib/auth";
 
-// ✅ GET SINGLE PRODUCT
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -31,7 +31,7 @@ export async function GET(
 
     return NextResponse.json(product);
   } catch (error: any) {
-    console.error("GET ERROR:", error);
+    console.error("GET PRODUCT ERROR:", error);
     return NextResponse.json(
       { error: "Failed to fetch product", details: error.message },
       { status: 500 }
@@ -39,12 +39,13 @@ export async function GET(
   }
 }
 
-// ✅ UPDATE PRODUCT
 export async function PUT(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireOwner();
+
     const { id } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -62,10 +63,16 @@ export async function PUT(
       id,
       {
         ...body,
+        name: typeof body.name === "string" ? body.name.trim() : body.name,
+        category:
+          typeof body.category === "string"
+            ? body.category.trim()
+            : body.category,
         size: typeof body.size === "string" ? body.size.trim() : "",
         description:
           typeof body.description === "string" ? body.description.trim() : "",
         usage: typeof body.usage === "string" ? body.usage.trim() : "",
+        image: typeof body.image === "string" ? body.image.trim() : body.image,
       },
       {
         new: true,
@@ -82,7 +89,12 @@ export async function PUT(
 
     return NextResponse.json(updatedProduct);
   } catch (error: any) {
-    console.error("PUT ERROR:", error);
+    console.error("PUT PRODUCT ERROR:", error);
+
+    if (error.message === "UNAUTHORIZED_OWNER") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     return NextResponse.json(
       { error: "Failed to update product", details: error.message },
       { status: 500 }
@@ -90,12 +102,13 @@ export async function PUT(
   }
 }
 
-// ✅ DELETE PRODUCT
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireOwner();
+
     const { id } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -120,7 +133,12 @@ export async function DELETE(
       message: "Product deleted successfully",
     });
   } catch (error: any) {
-    console.error("DELETE ERROR:", error);
+    console.error("DELETE PRODUCT ERROR:", error);
+
+    if (error.message === "UNAUTHORIZED_OWNER") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     return NextResponse.json(
       { error: "Failed to delete product", details: error.message },
       { status: 500 }

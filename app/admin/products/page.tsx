@@ -74,24 +74,20 @@ export default function AdminProductsPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-          cache: "no-store",
-        });
+        const authRes = await fetch("/api/auth/me", {
+  credentials: "include",
+  cache: "no-store",
+});
 
-        if (!res.ok) {
-          router.replace("/login?redirect=/admin/products");
-          return;
-        }
+if (authRes.ok) {
+  const user: AuthUser = await authRes.json();
+  if (user?.role !== "owner" && user?.role !== "admin") {
+    router.replace("/");
+    return;
+  }
+}
 
-        const user: AuthUser = await res.json();
-
-        if (user.role !== "owner" && user.role !== "admin") {
-          router.replace("/");
-          return;
-        }
-
-        await fetchProducts();
+await fetchProducts();
       } catch {
         router.replace("/login?redirect=/admin/products");
       } finally {

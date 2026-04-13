@@ -1,39 +1,29 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { connectDB } from "@/lib/mongodb";
-import User from "@/lib/models/User";
+import { getUser } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
+    const user = await getUser();
 
-    if (!userId) {
-      return NextResponse.json(
+    if (!user) {
+      const response = NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
+
+      response.cookies.set("userId", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        expires: new Date(0),
+      });
+
+      return response;
     }
 
-    await connectDB();
-
-    const user = await User.findById(userId).select("-password").lean();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      _id: String(user._id),
-      id: String(user._id),
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-    });
+    return NextResponse.json(user);
   } catch (error: any) {
     console.error("AUTH ME ERROR:", error);
     return NextResponse.json(

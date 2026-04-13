@@ -1,37 +1,18 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  const response = NextResponse.json({ message: "Logged out" });
+  const response = NextResponse.json({ message: "Logged out successfully" });
 
-  response.cookies.set("userId", "", {
+  const expiredCookie = {
     httpOnly: true,
     expires: new Date(0),
     path: "/",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     secure: process.env.NODE_ENV === "production",
-  });
+  };
 
-  response.cookies.set("ownerPending2FA", "", {
-    httpOnly: true,
-    expires: new Date(0),
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  response.cookies.set("auth_token", "", {
-    expires: new Date(0),
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  response.cookies.set("auth_role", "", {
-    expires: new Date(0),
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
+  response.cookies.set("userId", "", expiredCookie);
+  response.cookies.set("ownerPending2FA", "", expiredCookie);
 
   return response;
 }

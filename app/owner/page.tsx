@@ -135,7 +135,7 @@ export default function OwnerDashboard() {
   });
 
   useEffect(() => {
-    const checkAuthAndLoad = async () => {
+    const loadOwnerData = async () => {
       try {
         const authRes = await fetch("/api/auth/me", {
           method: "GET",
@@ -143,30 +143,22 @@ export default function OwnerDashboard() {
           cache: "no-store",
         });
 
-        if (!authRes.ok) {
-          router.replace("/login?redirect=/owner");
-          return;
+        if (authRes.ok) {
+          const user: AuthUser = await authRes.json();
+          setOwnerName(user?.name || "Owner");
         }
 
-        const user: AuthUser = await authRes.json();
-
-        if (!user || user.role !== "owner") {
-          router.replace("/");
-          return;
-        }
-
-        setOwnerName(user.name || "Owner");
         await fetchProducts();
       } catch (error) {
-        console.error("Owner auth failed:", error);
-        router.replace("/login?redirect=/owner");
+        console.error("Failed to load owner data:", error);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuthAndLoad();
-  }, [router]);
+    loadOwnerData();
+  }, []);
 
   async function fetchProducts() {
     try {
@@ -689,7 +681,7 @@ export default function OwnerDashboard() {
                           <input
                             type="file"
                             className="hidden"
-                            accept="image/png,image/jpeg,image/jpg"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
                             onChange={handleImageUpload}
                             disabled={imageLoading}
                           />

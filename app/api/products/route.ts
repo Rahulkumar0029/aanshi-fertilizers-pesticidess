@@ -1,42 +1,67 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Product from "@/lib/models/Product";
+import { requireOwner } from "@/lib/auth";
 
-// ✅ GET ALL PRODUCTS
 export async function GET() {
-    try {
-        await connectDB();
-        const products = await Product.find({}).sort({ createdAt: -1 });
-        return NextResponse.json(products);
-    } catch (error: any) {
-        console.error("GET ERROR:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch products", details: error.message },
-            { status: 500 }
-        );
-    }
+  try {
+    await connectDB();
+    const products = await Product.find({}).sort({ createdAt: -1 }).lean();
+
+    return NextResponse.json(products);
+  } catch (error: any) {
+    console.error("GET PRODUCTS ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch products", details: error.message },
+      { status: 500 }
+    );
+  }
 }
 
-// ✅ ADD PRODUCT
 export async function POST(request: Request) {
-    try {
-        await connectDB();
-        const body = await request.json();
+  try {
+    await requireOwner();
+    await connectDB();
 
-        // Standardize: ensure _id is handled by Mongo, and we don't use 'id'
-        const { id, size, ...rest } = body;
+    const body = await request.json();
 
-        const newProduct = await Product.create({
-            ...rest,
-            size: typeof size === "string" ? size.trim() : "",
-        });
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const category =
+      typeof body.category === "string" ? body.category.trim() : "";
+    const size = typeof body.size === "string" ? body.size.trim() : "";
+    const usage = typeof body.usage === "string" ? body.usage.trim() : "";
+    const description =
+      typeof body.description === "string" ? body.description.trim() : "";
+    const image = typeof body.image === "string" ? body.image.trim() : "";
 
-        return NextResponse.json(newProduct, { status: 201 });
-    } catch (error: any) {
-        console.error("POST ERROR:", error);
-        return NextResponse.json(
-            { error: "Failed to add product", details: error.message },
-            { status: 500 }
-        );
+    if (!name || !category) {
+      return NextResponse.json(
+        { error: "Product name and category are required" },
+        { status: 400 }
+      );
     }
+
+    const newProduct = await Product.create({
+      ...body,
+      name,
+      category,
+      size,
+      usage,
+      description,
+      image,
+    });
+
+    return NextResponse.json(newProduct, { status: 201 });
+  } catch (error: any) {
+    console.error("POST PRODUCT ERROR:", error);
+
+    if (error.message === "UNAUTHORIZED_OWNER") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    return NextResponse.json(
+      { error: "Failed to add product", details: error.message },
+      { status: 500 }
+    );
+  }
 }

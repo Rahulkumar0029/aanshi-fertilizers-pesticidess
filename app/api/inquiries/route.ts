@@ -3,145 +3,176 @@ import { connectDB } from "@/lib/mongodb";
 import Inquiry from "@/lib/models/Inquiry";
 import { getUser } from "@/lib/auth";
 
-// ✅ GET INQUIRIES
-export async function GET() {
-    try {
-        const user = await getUser();
+const ALLOWED_STATUSES = new Set(["pending", "contacted", "done"]);
 
-        if (!user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        await connectDB();
-
-        let inquiries;
-
-        if (user.role === "owner") {
-            inquiries = await Inquiry.find({}).sort({ createdAt: -1 });
-        } else {
-            inquiries = await Inquiry.find({ userId: user.id }).sort({ createdAt: -1 });
-        }
-
-        return NextResponse.json(inquiries);
-    } catch (error: any) {
-        console.error("GET ERROR:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch inquiries", details: error.message },
-            { status: 500 }
-        );
-    }
+function cleanString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
-// ✅ CREATE INQUIRY
-export async function POST(request: Request) {
-    try {
-        const user = await getUser();
+export async function GET() {
+  try {
+    const user = await getUser();
 
-        if (!user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-        const body = await request.json();
+    await connectDB();
 
-        const {
-            productId,
-            productName,
-            productCategory,
-            productSize,
-            phone,
-        } = body;
+    const inquiries =
+      user.role === "owner"
+        ? await Inquiry.find({}).sort({ createdAt: -1 }).lean()
+        : await Inquiry.find({ userId: user.id }).sort({ createdAt: -1 }).lean();
 
-        if (!productId || !productName || !productCategory) {
-            return NextResponse.json(
-                { error: "Missing required fields" },
-                { status: 400 }
-            );
-        }
-
-        await connectDB();
-
-        if (!phone || typeof phone !== "string") {
+    return NextResponse.json(inquiries);
+  } catch (error: any) {
+    console.error("GET INQUIRIES ERROR:", error);
     return NextResponse.json(
+      { error: "Failed to fetch inquiries", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const user = await getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+
+    const productId = cleanString(body.productId);
+    const productName = cleanString(body.productName);
+    const productCategory = cleanString(body.productCategory);
+    const productSize = cleanString(body.productSize);
+    const phone = cleanString(body.phone);
+
+    if (!productId || !productName || !productCategory) {
+      return NextResponse.json(
+        { error: "Missing required product fields" },
+        { status: 400 }
+      );
+    }
+
+    if (!phone) {
+      return NextResponse.json(
         { error: "Phone is required" },
         { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const newInquiry = await Inquiry.create({
+      userId: user.id,
+      userName: user.name,
+      phone,
+      productId,
+      productName,
+      productCategory,
+      productSize,
+      status: "pending",
+    });
+
+    return NextResponse.json(newInquiry, { status: 201 });
+  } catch (error: any) {
+    console.error("POST INQUIRY ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to create inquiry", details: error.message },
+      { status: 500 }
     );
+  }
 }
 
-const newInquiry = await Inquiry.create({
-    userId: user.id,
-    userName: user.name,
-    phone: phone.trim(),
-    productId,
-    productName,
-    productCategory,
-    productSize: typeof productSize === "string" ? productSize.trim() : "",
-    status: "pending",
-});
-
-        return NextResponse.json(newInquiry, { status: 201 });
-    } catch (error: any) {
-        console.error("POST ERROR:", error);
-        return NextResponse.json(
-            { error: "Failed to create inquiry", details: error.message },
-            { status: 500 }
-        );
-    }
-}
-
-// ✅ UPDATE INQUIRY
 export async function PUT(request: Request) {
-    try {
-        const user = await getUser();
+  try {
+    const user = await getUser();
 
-        if (!user || user.role !== "owner") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        await connectDB();
-
-        const { id, status } = await request.json();
-
-        const updated = await Inquiry.findByIdAndUpdate(id, { status }, { new: true });
-
-        if (!updated) {
-            return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
-        }
-
-        return NextResponse.json(updated);
-    } catch (error: any) {
-        console.error("PUT ERROR:", error);
-        return NextResponse.json(
-            { error: "Failed to update inquiry", details: error.message },
-            { status: 500 }
-        );
+    if (!user || user.role !== "owner") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await request.json();
+    const id = cleanString(body.id);
+    const status = cleanString(body.status).toLowerCase();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Inquiry ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!ALLOWED_STATUSES.has(status)) {
+      return NextResponse.json(
+        { error: "Invalid inquiry status" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const updated = await Inquiry.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Inquiry not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    console.error("PUT INQUIRY ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to update inquiry", details: error.message },
+      { status: 500 }
+    );
+  }
 }
 
-// ✅ DELETE INQUIRY
 export async function DELETE(request: Request) {
-    try {
-        const user = await getUser();
+  try {
+    const user = await getUser();
 
-        if (!user || user.role !== "owner") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
-        await connectDB();
-
-        const { id } = await request.json();
-
-        const deleted = await Inquiry.findByIdAndDelete(id);
-
-        if (!deleted) {
-            return NextResponse.json({ error: "Inquiry not found" }, { status: 404 });
-        }
-
-        return NextResponse.json({ message: "Deleted successfully" });
-    } catch (error: any) {
-        console.error("DELETE ERROR:", error);
-        return NextResponse.json(
-            { error: "Failed to delete inquiry", details: error.message },
-            { status: 500 }
-        );
+    if (!user || user.role !== "owner") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await request.json();
+    const id = cleanString(body.id);
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Inquiry ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const deleted = await Inquiry.findByIdAndDelete(id).lean();
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Inquiry not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: "Inquiry deleted successfully" });
+  } catch (error: any) {
+    console.error("DELETE INQUIRY ERROR:", error);
+    return NextResponse.json(
+      { error: "Failed to delete inquiry", details: error.message },
+      { status: 500 }
+    );
+  }
 }

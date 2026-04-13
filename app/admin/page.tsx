@@ -84,8 +84,7 @@ type AdminStats = {
 
 export default function AdminHome() {
   const [adminName, setAdminName] = useState("Admin");
-  const [userRole, setUserRole] = useState("");
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [userRole, setUserRole] = useState("owner");
   const [stats, setStats] = useState<AdminStats>({
     products: 0,
     orders: 0,
@@ -103,25 +102,25 @@ export default function AdminHome() {
           cache: "no-store",
         });
 
-        if (!authRes.ok) {
-          router.replace("/login?redirect=/admin");
-          return;
+        if (authRes.ok) {
+          const user: AuthUser = await authRes.json();
+          setAdminName(user?.name || "Admin");
+          setUserRole(user?.role || "owner");
         }
-
-        const user: AuthUser = await authRes.json();
-
-        if (!user || (user.role !== "admin" && user.role !== "owner")) {
-          router.replace("/");
-          return;
-        }
-
-        setAdminName(user.name || "Admin");
-        setUserRole(user.role);
 
         const [productsRes, ordersRes, inquiriesRes] = await Promise.all([
-          fetch("/api/products", { credentials: "include", cache: "no-store" }),
-          fetch("/api/orders", { credentials: "include", cache: "no-store" }),
-          fetch("/api/inquiries", { credentials: "include", cache: "no-store" }),
+          fetch("/api/products", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+          fetch("/api/orders", {
+            credentials: "include",
+            cache: "no-store",
+          }),
+          fetch("/api/inquiries", {
+            credentials: "include",
+            cache: "no-store",
+          }),
         ]);
 
         const [productsData, ordersData, inquiriesData] = await Promise.all([
@@ -137,14 +136,11 @@ export default function AdminHome() {
         });
       } catch (error) {
         console.error("Failed to load admin data:", error);
-        router.replace("/login?redirect=/admin");
-      } finally {
-        setCheckingAuth(false);
       }
     };
 
     loadAdminData();
-  }, [router]);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -160,18 +156,10 @@ export default function AdminHome() {
     }
   };
 
-  if (checkingAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
-        <p className="text-sm text-gray-500">Loading admin panel...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#f8fafc] py-6 sm:py-8 lg:py-10">
       <div className="container-app">
-        <div className="mb-8 flex flex-col gap-4 lg:mb-10 md:flex-row md:items-center md:justify-between">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between lg:mb-10">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-primary p-2 shadow-lg shadow-primary/20">
               <Leaf className="text-white" size={24} />
