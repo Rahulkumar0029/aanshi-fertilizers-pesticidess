@@ -6,7 +6,7 @@ import User from "@/lib/models/User";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function AdminLayout({
+export default async function OwnerLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ export default async function AdminLayout({
   const userId = cookieStore.get("userId")?.value;
 
   if (!userId) {
-    redirect("/login?redirect=/admin");
+    redirect("/login?redirect=/owner");
   }
 
   await connectDB();
@@ -23,7 +23,7 @@ export default async function AdminLayout({
   const user = await User.findById(userId).select("role");
 
   if (!user || user.role !== "owner") {
-    redirect("/login?redirect=/admin");
+    redirect("/login?redirect=/owner");
   }
 
   return <div className="min-h-screen bg-background">{children}</div>;
