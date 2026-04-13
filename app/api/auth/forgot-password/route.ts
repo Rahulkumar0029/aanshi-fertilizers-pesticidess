@@ -71,6 +71,7 @@ export async function POST(req: Request) {
     const baseUrl = getBaseUrl();
 
     const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
+
     if (!fromEmail) {
       throw new Error("Missing RESEND_FROM_EMAIL");
     }
@@ -81,6 +82,12 @@ export async function POST(req: Request) {
     console.log("FROM_EMAIL:", fromEmail);
     console.log("HAS_RESEND_KEY:", !!process.env.RESEND_API_KEY);
     console.log("RESET_URL:", resetUrl);
+    console.log("User email value:", user.email);
+    console.log("User name value:", user.name);
+
+    console.log("About to send email...");
+    console.log("Sending to:", user.email);
+    console.log("Using from:", fromEmail);
 
     const emailResult = await resend.emails.send({
       from: fromEmail,
@@ -115,18 +122,19 @@ export async function POST(req: Request) {
       }, reset your password using this link: ${resetUrl}. This link expires in 30 minutes.`,
     });
 
-    console.log("RESEND RESULT:", emailResult);
+    console.log("Full RESEND RESULT:", JSON.stringify(emailResult, null, 2));
 
     if ((emailResult as any)?.error) {
-      console.error("RESEND SEND ERROR:", (emailResult as any).error);
       throw new Error(
-        (emailResult as any).error?.message || "Failed to send reset email"
+        JSON.stringify((emailResult as any).error, null, 2)
       );
     }
 
     return genericResponse;
   } catch (error: any) {
-    console.error("FORGOT PASSWORD ERROR:", error);
+    console.error("FORGOT PASSWORD ERROR FULL:", error);
+    console.error("FORGOT PASSWORD ERROR MESSAGE:", error?.message);
+    console.error("FORGOT PASSWORD ERROR STACK:", error?.stack);
 
     return NextResponse.json(
       {
