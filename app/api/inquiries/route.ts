@@ -9,6 +9,12 @@ function cleanString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function cleanNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export async function GET() {
   try {
     const user = await getUser();
@@ -47,7 +53,10 @@ export async function POST(request: Request) {
     const productId = cleanString(body.productId);
     const productName = cleanString(body.productName);
     const productCategory = cleanString(body.productCategory);
-    const productSize = cleanString(body.productSize);
+    const selectedSize = cleanString(body.selectedSize || body.productSize);
+    const selectedPrice = cleanNumber(body.selectedPrice || body.price);
+    const selectedMrp = cleanNumber(body.selectedMrp || body.mrp);
+    const brand = cleanString(body.brand);
     const phone = cleanString(body.phone);
 
     if (!productId || !productName || !productCategory) {
@@ -73,7 +82,10 @@ export async function POST(request: Request) {
       productId,
       productName,
       productCategory,
-      productSize,
+      selectedSize,
+      selectedPrice,
+      selectedMrp,
+      brand,
       status: "pending",
     });
 

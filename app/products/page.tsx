@@ -8,16 +8,28 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { buildProductInquiryMessage, openWhatsApp } from "@/lib/whatsapp";
 import ProductCard from "@/components/ProductCard";
 
+type ProductVariant = {
+  label: string;
+  mrp?: number;
+  price?: number;
+  isDefault?: boolean;
+  stock?: "in_stock" | "low_stock" | "out_of_stock";
+};
+
 type Product = {
   _id: string;
   name: string;
+  brand?: string;
   category: string;
-  price?: number;
-  mrp?: number;
   usage?: string;
   description?: string;
   image?: string;
+  variants?: ProductVariant[];
+
+  // backward compatibility for old products
   size?: string;
+  mrp?: number;
+  price?: number;
 };
 
 type AuthUser = {
@@ -29,6 +41,10 @@ type AuthUser = {
   role: string;
 };
 
+type InquiryProduct = Product & {
+  selectedVariant?: ProductVariant | null;
+};
+
 const CATEGORIES = [
   "All",
   "Fertilizers",
@@ -38,6 +54,33 @@ const CATEGORIES = [
   "Organic",
   "Fungicides",
 ];
+
+function getCompatibleVariant(product: InquiryProduct): ProductVariant | null {
+  if (product.selectedVariant) return product.selectedVariant;
+
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+    return (
+      product.variants.find((variant) => variant.isDefault) ||
+      product.variants[0]
+    );
+  }
+
+  if (
+    product.size ||
+    typeof product.price === "number" ||
+    typeof product.mrp === "number"
+  ) {
+    return {
+      label: product.size || "Default",
+      price: product.price,
+      mrp: product.mrp,
+      isDefault: true,
+      stock: "in_stock",
+    };
+  }
+
+  return null;
+}
 
 function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -73,22 +116,32 @@ function ProductsContent() {
     setSelectedCategory(categoryFromURL || "All");
   }, [searchParams]);
 
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = products.filter((product) => {
     const matchCategory =
       selectedCategory === "All" ||
-      p.category?.toLowerCase().trim() ===
+      product.category?.toLowerCase().trim() ===
         selectedCategory.toLowerCase().trim();
 
-    const matchSearch = p.name
-      ?.toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase().trim();
 
-    return matchCategory && matchSearch;
+    const matchSearch =
+      !query ||
+      product.name?.toLowerCase().includes(query) ||
+      product.brand?.toLowerCase().includes(query) ||
+      product.category?.toLowerCase().includes(query) ||
+      product.size?.toLowerCase().includes(query) ||
+      product.variants?.some((variant) =>
+        variant.label.toLowerCase().includes(query)
+      );
+
+    return Boolean(matchCategory && matchSearch);
   });
 
-  const handleInquiry = async (product: Product) => {
+  const handleInquiry = async (product: InquiryProduct) => {
     try {
       setActionLoadingId(product._id);
+
+      const selectedVariant = getCompatibleVariant(product);
 
       const authRes = await fetch("/api/auth/me", {
         method: "GET",
@@ -105,8 +158,7 @@ function ProductsContent() {
       const userId = user.id || user._id;
 
       if (!userId || !user.name || !user.phone) {
-        alert("Your account details are incomplete. Please login again.");
-        router.push("/login?redirect=/products");
+        alert("Your account details are incomplete.");
         return;
       }
 
@@ -117,67 +169,56 @@ function ProductsContent() {
         productId: product._id,
         productName: product.name,
         productCategory: product.category,
-        productSize: product.size || "",
+        selectedSize: selectedVariant?.label || "",
+        selectedPrice: selectedVariant?.price || 0,
+        selectedMrp: selectedVariant?.mrp || 0,
+        brand: product.brand || "",
         status: "pending",
-        message: product.description || "",
       };
 
-      const inquiryRes = await fetch("/api/inquiries", {
+      await fetch("/api/inquiries", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(inquiryPayload),
       });
-
-      if (!inquiryRes.ok) {
-        const inquiryError = await inquiryRes.json().catch(() => null);
-        console.error("Inquiry save failed:", inquiryError);
-      }
 
       const orderPayload = {
         userId,
         productId: product._id,
         productName: product.name,
         productCategory: product.category,
-        productSize: product.size || "",
+        selectedSize: selectedVariant?.label || "",
+        selectedPrice: selectedVariant?.price || 0,
+        selectedMrp: selectedVariant?.mrp || 0,
+        brand: product.brand || "",
         customerName: user.name,
         phone: user.phone,
         status: "Pending",
         source: "WhatsApp",
-        price: product.price || 0,
       };
 
-      const orderRes = await fetch("/api/orders", {
+      await fetch("/api/orders", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(orderPayload),
       });
 
-      if (!orderRes.ok) {
-        const orderError = await orderRes.json().catch(() => null);
-        console.error("Order save failed:", orderError);
-      }
-
       const message = buildProductInquiryMessage({
-        customerName: user.name,
-        customerPhone: user.phone,
         productName: product.name,
         category: product.category,
-        size: product.size,
-        price: product.price,
-        mrp: product.mrp,
+        brand: product.brand,
+        size: selectedVariant?.label,
+        price: selectedVariant?.price,
+        mrp: selectedVariant?.mrp,
         description: product.description || product.usage,
       });
 
       openWhatsApp(message);
     } catch (error) {
-      console.error("Failed to handle inquiry/order:", error);
-      alert("Something went wrong. Please try again.");
+      console.error("Inquiry error:", error);
+      alert("Something went wrong.");
     } finally {
       setActionLoadingId(null);
     }
@@ -185,34 +226,30 @@ function ProductsContent() {
 
   return (
     <div className="min-h-screen bg-[#f8faf8]">
-      <section className="bg-primary px-4 py-14 text-white sm:py-16">
+      <section className="bg-primary px-4 py-14 text-white">
         <div className="container-app text-center">
-          <h1 className="mb-3 text-3xl font-bold sm:text-4xl lg:text-5xl">
-            Our Product Catalog
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm opacity-90 sm:text-lg">
+          <h1 className="text-4xl font-bold">Our Product Catalog</h1>
+          <p className="mt-2 text-lg opacity-90">
             High-quality agricultural inputs for every farming need.
           </p>
         </div>
       </section>
 
-      <section className="container-app -mt-6 sm:-mt-8">
-        <div className="rounded-2xl bg-white p-4 shadow-xl sm:p-6">
+      <section className="container-app -mt-6">
+        <div className="rounded-2xl bg-white p-4 shadow-xl">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
             <div className="relative w-full lg:max-w-sm">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search products..."
-                className="w-full rounded-xl border border-border py-3 pl-12 pr-4 outline-none transition focus:border-primary"
+                placeholder="Search by name, brand, size..."
+                className="w-full rounded-xl border py-3 pl-12 pr-4 outline-none"
                 value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearchQuery(e.target.value)
-                }
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="flex w-full flex-wrap gap-2 sm:gap-3">
+            <div className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
@@ -221,10 +258,10 @@ function ProductsContent() {
                     setSelectedCategory(cat);
                     router.push(`/products?category=${cat}`);
                   }}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition sm:px-5 ${
+                  className={`rounded-full px-4 py-2 ${
                     selectedCategory === cat
                       ? "bg-primary text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : "bg-gray-200"
                   }`}
                 >
                   {cat}
@@ -235,14 +272,12 @@ function ProductsContent() {
         </div>
       </section>
 
-      <section className="container-app py-12 sm:py-16 lg:py-20">
+      <section className="container-app py-12">
         {loading ? (
-          <p className="text-center text-sm text-gray-500 sm:text-base">
-            Loading...
-          </p>
+          <p className="text-center">Loading...</p>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-8">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredProducts.map((product) => (
                 <ProductCard
                   key={product._id}
@@ -254,7 +289,7 @@ function ProductsContent() {
             </div>
 
             {filteredProducts.length === 0 && (
-              <p className="mt-10 text-center text-sm text-gray-400 sm:text-base">
+              <p className="mt-10 text-center text-gray-400">
                 No products found
               </p>
             )}
@@ -267,9 +302,7 @@ function ProductsContent() {
 
 export default function Products() {
   return (
-    <Suspense
-      fallback={<div className="container-app py-10 text-center">Loading...</div>}
-    >
+    <Suspense fallback={<div>Loading...</div>}>
       <ProductsContent />
     </Suspense>
   );

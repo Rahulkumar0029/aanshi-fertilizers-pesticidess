@@ -10,8 +10,16 @@ type Inquiry = {
   _id: string;
   userName: string;
   phone?: string;
+
   productName: string;
   productCategory: string;
+
+  // ✅ NEW FIELDS
+  brand?: string;
+  selectedSize?: string;
+  selectedPrice?: number;
+  selectedMrp?: number;
+
   status: string;
   timestamp?: string;
   createdAt?: string;
@@ -161,92 +169,90 @@ export default function InquiryPage() {
       <Toaster position="top-right" />
 
       <div className="container-app">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold sm:text-3xl">Inquiry Dashboard</h1>
-            <p className="mt-1 text-sm leading-6 text-gray-500 sm:text-base">
-              Manage inquiries and follow up with customers professionally.
-            </p>
-          </div>
+        <div className="mb-6 flex justify-between">
+          <h1 className="text-2xl font-bold">Inquiry Dashboard</h1>
 
           <button
-            type="button"
             onClick={() => router.push("/admin")}
-            className="inline-flex items-center justify-center gap-2 rounded border bg-white px-4 py-2 hover:bg-gray-50"
+            className="flex items-center gap-2 border px-4 py-2 bg-white"
           >
             <ArrowLeft size={16} />
             Back
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-xl bg-white shadow">
-          <div className="table-scroll">
-            <table className="min-w-[900px]">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="p-3 text-left">Customer</th>
-                  <th className="p-3 text-left">Product</th>
-                  <th className="p-3 text-left">Category</th>
-                  <th className="p-3 text-left">Status</th>
-                  <th className="p-3 text-left">Date</th>
-                  <th className="p-3 text-left">Actions</th>
+        <div className="bg-white rounded shadow overflow-x-auto">
+          <table className="min-w-[1100px] w-full">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-3 text-left">Customer</th>
+                <th className="p-3 text-left">Product</th>
+                <th className="p-3 text-left">Brand</th>
+                <th className="p-3 text-left">Size</th>
+                <th className="p-3 text-left">Price</th>
+                <th className="p-3 text-left">MRP</th>
+                <th className="p-3 text-left">Status</th>
+                <th className="p-3 text-left">Date</th>
+                <th className="p-3 text-left">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {data.map((item) => (
+                <tr key={item._id} className="border-t">
+                  <td className="p-3 font-semibold">{item.userName}</td>
+                  <td className="p-3">{item.productName}</td>
+                  <td className="p-3">{item.brand || "-"}</td>
+                  <td className="p-3">{item.selectedSize || "-"}</td>
+                  <td className="p-3">
+                    {item.selectedPrice
+                      ? `₹ ${item.selectedPrice}`
+                      : "-"}
+                  </td>
+                  <td className="p-3">
+                    {item.selectedMrp ? `₹ ${item.selectedMrp}` : "-"}
+                  </td>
+
+                  <td className="p-3">
+                    <select
+                      value={item.status}
+                      onChange={(e) =>
+                        updateStatus(item._id, e.target.value)
+                      }
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="done">Done</option>
+                    </select>
+                  </td>
+
+                  <td className="p-3">{getDisplayDate(item)}</td>
+
+                  <td className="p-3 flex gap-2">
+                    <button
+                      onClick={() => handleWhatsApp(item)}
+                      className="bg-green-500 text-white px-3 py-2 rounded"
+                    >
+                      <MessageSquare size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => deleteInquiry(item._id)}
+                      className="bg-red-500 text-white px-3 py-2 rounded"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-
-              <tbody>
-                {data.map((item) => (
-                  <tr key={item._id} className="border-t hover:bg-gray-50">
-                    <td className="p-3 font-semibold">{item.userName}</td>
-                    <td className="p-3">{item.productName}</td>
-                    <td className="p-3">{item.productCategory}</td>
-
-                    <td className="p-3">
-                      <select
-                        value={item.status}
-                        onChange={(e) => updateStatus(item._id, e.target.value)}
-                        className="rounded border px-2 py-1"
-                        disabled={actionLoadingId === item._id}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="done">Done</option>
-                      </select>
-                    </td>
-
-                    <td className="p-3">{getDisplayDate(item)}</td>
-
-                    <td className="p-3">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleWhatsApp(item)}
-                          disabled={!item.phone || actionLoadingId === item._id}
-                          className="inline-flex items-center gap-2 rounded bg-green-500 px-3 py-2 text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <MessageSquare size={16} />
-                          WhatsApp
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => deleteInquiry(item._id)}
-                          disabled={actionLoadingId === item._id}
-                          className="inline-flex items-center gap-2 rounded bg-red-500 px-3 py-2 text-white hover:bg-red-600 disabled:opacity-70"
-                        >
-                          <Trash2 size={16} />
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         {data.length === 0 && (
-          <p className="mt-10 text-center text-gray-500">No inquiries yet.</p>
+          <p className="mt-10 text-center text-gray-500">
+            No inquiries yet.
+          </p>
         )}
       </div>
     </div>

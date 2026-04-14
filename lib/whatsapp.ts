@@ -5,6 +5,7 @@ type ProductInquiryInput = {
   customerPhone?: string;
   productName: string;
   category?: string;
+  brand?: string;
   size?: string;
   price?: number | string;
   mrp?: number | string;
@@ -63,6 +64,7 @@ export function buildProductInquiryMessage(input: ProductInquiryInput) {
     ``,
     `I want details for this product:`,
     `• Product Name: ${input.productName}`,
+    input.brand ? `• Brand: ${input.brand}` : "",
     input.category ? `• Category: ${input.category}` : "",
     input.size ? `• Size: ${input.size}` : "",
     input.price ? `• Offer Price: ₹ ${input.price}` : "",

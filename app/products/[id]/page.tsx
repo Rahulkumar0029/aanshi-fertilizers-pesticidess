@@ -1,57 +1,189 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
+import { notFound, useParams } from "next/navigation";
 import { BUSINESS_DETAILS } from "@/lib/constants";
 import { buildProductInquiryMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
-async function getProduct(id: string) {
-  try {
-    const headerStore = await headers();
-    const host = headerStore.get("x-forwarded-host") || headerStore.get("host");
-    const protocol = headerStore.get("x-forwarded-proto") || "https";
+type ProductVariant = {
+  label: string;
+  mrp?: number;
+  price?: number;
+  isDefault?: boolean;
+  stock?: "in_stock" | "low_stock" | "out_of_stock";
+};
 
-    if (!host) return null;
+type Product = {
+  _id: string;
+  name: string;
+  brand?: string;
+  category: string;
+  usage?: string;
+  description?: string;
+  image?: string;
+  variants?: ProductVariant[];
 
-    const baseUrl = `${protocol}://${host}`;
+  // backward compatibility for old products
+  size?: string;
+  mrp?: number;
+  price?: number;
+};
 
-    const res = await fetch(`${baseUrl}/api/products/${id}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.error("API failed:", err);
-    return null;
+function getDefaultVariant(product: Product): ProductVariant | null {
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+    return (
+      product.variants.find((variant) => variant.isDefault) ||
+      product.variants[0]
+    );
   }
+
+  if (
+    product.size ||
+    typeof product.price === "number" ||
+    typeof product.mrp === "number"
+  ) {
+    return {
+      label: product.size || "Default",
+      price: product.price,
+      mrp: product.mrp,
+      isDefault: true,
+      stock: "in_stock",
+    };
+  }
+
+  return null;
 }
 
-export default async function ProductDetails({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const product = await getProduct(id);
+function getDisplayVariants(product: Product): ProductVariant[] {
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+    return product.variants;
+  }
 
-  if (!product) return notFound();
+  if (
+    product.size ||
+    typeof product.price === "number" ||
+    typeof product.mrp === "number"
+  ) {
+    return [
+      {
+        label: product.size || "Default",
+        price: product.price,
+        mrp: product.mrp,
+        isDefault: true,
+        stock: "in_stock",
+      },
+    ];
+  }
 
-  const getDiscount = (mrp?: number, price?: number) => {
-    if (!mrp || !price || mrp <= 0) return 0;
-    return Math.floor(((mrp - price) / mrp) * 100);
-  };
+  return [];
+}
 
-  const discount = getDiscount(product.mrp, product.price);
+function getDiscount(mrp?: number, price?: number) {
+  if (!mrp || !price || mrp <= 0 || mrp <= price) return 0;
+  return Math.floor(((mrp - price) / mrp) * 100);
+}
 
-  const whatsappMessage = buildProductInquiryMessage({
-    productName: product.name,
-    category: product.category,
-    size: product.size,
-    price: product.price,
-    mrp: product.mrp,
-    description: product.description,
-  });
+export default function ProductDetailsPage() {
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFoundState, setNotFoundState] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
+    null
+  );
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        setNotFoundState(false);
+
+        const res = await fetch(`/api/products/${id}`, {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          if (res.status === 404) {
+            setNotFoundState(true);
+          }
+          setProduct(null);
+          return;
+        }
+
+        const data = await res.json();
+        setProduct(data);
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+        setProduct(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  const displayVariants = useMemo(
+    () => (product ? getDisplayVariants(product) : []),
+    [product]
+  );
+
+  const initialVariant = useMemo(
+    () => (product ? getDefaultVariant(product) : null),
+    [product]
+  );
+
+  useEffect(() => {
+    setSelectedVariant(initialVariant);
+  }, [initialVariant]);
+
+  if (notFoundState) {
+    notFound();
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f8faf8] py-8 sm:py-10 lg:py-12">
+        <div className="container-app">
+          <div className="rounded-2xl bg-white p-10 text-center shadow-lg">
+            Loading product...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-[#f8faf8] py-8 sm:py-10 lg:py-12">
+        <div className="container-app">
+          <div className="rounded-2xl bg-white p-10 text-center shadow-lg">
+            Product not found.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const discount = getDiscount(selectedVariant?.mrp, selectedVariant?.price);
+
+  const whatsappUrl = buildWhatsAppUrl(
+    buildProductInquiryMessage({
+      productName: product.name,
+      category: product.category,
+      brand: product.brand,
+      size: selectedVariant?.label,
+      price: selectedVariant?.price,
+      mrp: selectedVariant?.mrp,
+      description: product.description || product.usage,
+    })
+  );
 
   return (
     <div className="min-h-screen bg-[#f8faf8] py-8 sm:py-10 lg:py-12">
@@ -66,97 +198,120 @@ export default async function ProductDetails({
             </Link>
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
-             <div className="relative flex h-72 items-center justify-center overflow-hidden rounded-xl bg-gray-50 sm:h-80 lg:min-h-[460px]">
-  <Image
-    src={product.image || "/placeholder.png"}
-    alt={product.name}
-    fill
-    sizes="(max-width: 1024px) 100vw, 50vw"
-    className="object-contain p-6"
-  />
+              <div className="relative flex h-72 items-center justify-center overflow-hidden rounded-xl bg-gray-50 sm:h-80 lg:min-h-[460px]">
+                <Image
+                  src={product.image || "/placeholder.png"}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-contain p-6"
+                />
 
-                {discount > 0 && (
-                  <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow sm:text-sm">
+                {product.brand ? (
+                  <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-bold text-green-800 shadow">
+                    {product.brand}
+                  </span>
+                ) : null}
+
+                {discount > 0 ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white shadow-md">
                     {discount}% OFF
                   </span>
-                )}
+                ) : null}
               </div>
 
               <div className="flex flex-col gap-5">
                 <div className="space-y-2">
-                  <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+                  <h1 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
                     {product.name}
                   </h1>
 
-                  <p className="text-sm text-gray-500 sm:text-base">
-                    Category: {product.category}
-                  </p>
+                  <p className="text-gray-500">Category: {product.category}</p>
                 </div>
 
-                {product.size && (
+                {displayVariants.length > 0 ? (
                   <div>
-                    <h3 className="mb-2 text-base font-semibold sm:text-lg">
-                      Available Size
-                    </h3>
-                    <span className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-800">
-                      {product.size}
-                    </span>
-                  </div>
-                )}
+                    <h3 className="mb-2 font-semibold">Available Sizes</h3>
 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <span className="text-2xl font-bold text-primary sm:text-3xl">
-                    {typeof product.price === "number"
-                      ? `₹ ${product.price}`
-                      : "Contact for Price"}
+                    <div className="flex flex-wrap gap-2">
+                      {displayVariants.map((variant, index) => {
+                        const isActive =
+                          selectedVariant?.label === variant.label;
+
+                        return (
+                          <button
+                            key={`${variant.label}-${index}`}
+                            type="button"
+                            onClick={() => setSelectedVariant(variant)}
+                            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                              isActive
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                            }`}
+                          >
+                            {variant.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-3xl font-bold text-primary">
+                    {typeof selectedVariant?.price === "number"
+                      ? `₹ ${selectedVariant.price.toLocaleString("en-IN")}`
+                      : "Contact"}
                   </span>
 
-                  {typeof product.mrp === "number" && (
-                    <span className="text-lg text-gray-400 line-through sm:text-xl">
-                      ₹ {product.mrp}
+                  {typeof selectedVariant?.mrp === "number" &&
+                  selectedVariant.mrp > (selectedVariant.price ?? 0) ? (
+                    <span className="text-lg text-gray-400 line-through">
+                      ₹ {selectedVariant.mrp.toLocaleString("en-IN")}
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
+                {selectedVariant?.stock === "low_stock" ? (
+                  <p className="text-sm font-semibold text-amber-600">
+                    Limited stock available
+                  </p>
+                ) : null}
+
+                {selectedVariant?.stock === "out_of_stock" ? (
+                  <p className="text-sm font-semibold text-red-600">
+                    Out of stock
+                  </p>
+                ) : null}
+
                 <div>
-                  <h3 className="mb-2 text-base font-semibold sm:text-lg">
-                    Description
-                  </h3>
-                  <p className="text-sm leading-7 text-gray-600 sm:text-base">
-                    {product.description?.trim() ||
-                      "High-quality agricultural product suitable for better crop yield."}
+                  <h3 className="font-semibold">Description</h3>
+                  <p className="text-gray-600">
+                    {product.description || "High-quality agricultural product"}
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="mb-2 text-base font-semibold sm:text-lg">
-                    Usage
-                  </h3>
-                  <p className="text-sm leading-7 text-gray-600 sm:text-base">
-                    {product.usage?.trim() ||
-                      "Use as per agricultural guidelines."}
+                  <h3 className="font-semibold">Usage</h3>
+                  <p className="text-gray-600">
+                    {product.usage || "Use as per agricultural guidelines"}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-green-100 bg-green-50 p-4 text-sm text-gray-700 sm:p-5">
+                <div className="rounded-xl bg-green-50 p-4 text-sm">
                   <p className="font-semibold text-primary">
-                    Need quick help before ordering?
+                    Need help before ordering?
                   </p>
-                  <p className="mt-2 leading-6">
-                    Message us on WhatsApp and our team will guide you with
-                    price, availability, usage, and purchase details.
-                  </p>
-                  <p className="mt-3 break-words">
-                    WhatsApp: +91 {BUSINESS_DETAILS.phone}
-                  </p>
+                  <p className="mt-2">WhatsApp us for best guidance.</p>
+                  <p className="mt-2">WhatsApp: +91 {BUSINESS_DETAILS.phone}</p>
                   <p className="break-all">Email: {BUSINESS_DETAILS.email}</p>
                 </div>
 
                 <a
-                  href={buildWhatsAppUrl(whatsappMessage)}
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-2 rounded-xl bg-green-500 px-4 py-4 text-center text-base font-bold text-white transition hover:bg-green-600 sm:text-lg"
+                  className="rounded-xl bg-green-500 py-4 text-center font-bold text-white hover:bg-green-600"
                 >
                   Order / Inquire on WhatsApp
                 </a>

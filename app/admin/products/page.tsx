@@ -15,16 +15,28 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+type Variant = {
+  label: string;
+  mrp: number;
+  price: number;
+  isDefault: boolean;
+  stock?: "in_stock" | "low_stock" | "out_of_stock";
+};
+
 type Product = {
   _id?: string;
   name: string;
+  brand?: string;
   category: string;
-  mrp?: number;
-  price?: number;
   usage?: string;
   description?: string;
   image?: string;
+  variants?: Variant[];
+
+  // backward compatibility for old products
   size?: string;
+  mrp?: number;
+  price?: number;
 };
 
 type AuthUser = {
@@ -50,16 +62,59 @@ function getSafeImageSrc(src?: string) {
   return value ? value : FALLBACK_IMAGE;
 }
 
+function createEmptyVariant(isDefault = false): Variant {
+  return {
+    label: "",
+    mrp: 0,
+    price: 0,
+    isDefault,
+    stock: "in_stock",
+  };
+}
+
 const EMPTY_FORM: Product = {
   name: "",
+  brand: "",
   category: CATEGORIES[0],
-  mrp: 0,
-  price: 0,
   usage: "",
   description: "",
   image: FALLBACK_IMAGE,
-  size: "",
+  variants: [createEmptyVariant(true)],
 };
+
+function getDisplayVariants(product: Product): Variant[] {
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+    return product.variants;
+  }
+
+  if (
+    product.size ||
+    typeof product.price === "number" ||
+    typeof product.mrp === "number"
+  ) {
+    return [
+      {
+        label: product.size || "Default",
+        mrp: Number(product.mrp || 0),
+        price: Number(product.price || 0),
+        isDefault: true,
+        stock: "in_stock",
+      },
+    ];
+  }
+
+  return [];
+}
+
+function getDefaultVariant(product: Product): Variant | null {
+  const variants = getDisplayVariants(product);
+
+  if (!variants.length) {
+    return null;
+  }
+
+  return variants.find((variant) => variant.isDefault) || variants[0];
+}
 
 export default function AdminProductsPage() {
   const router = useRouter();
@@ -75,19 +130,19 @@ export default function AdminProductsPage() {
     const init = async () => {
       try {
         const authRes = await fetch("/api/auth/me", {
-  credentials: "include",
-  cache: "no-store",
-});
+          credentials: "include",
+          cache: "no-store",
+        });
 
-if (authRes.ok) {
-  const user: AuthUser = await authRes.json();
-  if (user?.role !== "owner" && user?.role !== "admin") {
-    router.replace("/");
-    return;
-  }
-}
+        if (authRes.ok) {
+          const user: AuthUser = await authRes.json();
+          if (user?.role !== "owner" && user?.role !== "admin") {
+            router.replace("/");
+            return;
+          }
+        }
 
-await fetchProducts();
+        await fetchProducts();
       } catch {
         router.replace("/login?redirect=/admin/products");
       } finally {
@@ -120,13 +175,73 @@ await fetchProducts();
 
     setForm((prev) => ({
       ...prev,
-      [name]: name === "price" || name === "mrp" ? Number(value) : value,
+      [name]: value,
     }));
   };
 
   const resetForm = () => {
-    setForm(EMPTY_FORM);
+    setForm({
+      ...EMPTY_FORM,
+      variants: [createEmptyVariant(true)],
+    });
     setEditingId(null);
+  };
+
+  const addVariant = () => {
+    setForm((prev) => ({
+      ...prev,
+      variants: [...(prev.variants || []), createEmptyVariant(false)],
+    }));
+  };
+
+  const removeVariant = (index: number) => {
+    setForm((prev) => {
+      const updated = (prev.variants || []).filter((_, i) => i !== index);
+
+      if (updated.length === 0) {
+        return {
+          ...prev,
+          variants: [createEmptyVariant(true)],
+        };
+      }
+
+      if (!updated.some((variant) => variant.isDefault)) {
+        updated[0].isDefault = true;
+      }
+
+      return {
+        ...prev,
+        variants: updated,
+      };
+    });
+  };
+
+  const updateVariant = <K extends keyof Variant>(
+    index: number,
+    field: K,
+    value: Variant[K]
+  ) => {
+    setForm((prev) => ({
+      ...prev,
+      variants: (prev.variants || []).map((variant, i) =>
+        i === index
+          ? {
+              ...variant,
+              [field]: value,
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const setDefaultVariant = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      variants: (prev.variants || []).map((variant, i) => ({
+        ...variant,
+        isDefault: i === index,
+      })),
+    }));
   };
 
   const handleImageUpload = async (
@@ -176,6 +291,34 @@ await fetchProducts();
       return;
     }
 
+    const cleanedVariants = (form.variants || [])
+      .map((variant) => ({
+        label: variant.label.trim(),
+        mrp: Number(variant.mrp || 0),
+        price: Number(variant.price || 0),
+        isDefault: Boolean(variant.isDefault),
+        stock: variant.stock || "in_stock",
+      }))
+      .filter((variant) => variant.label);
+
+    if (cleanedVariants.length === 0) {
+      toast.error("At least one valid size variant is required");
+      return;
+    }
+
+    if (!cleanedVariants.some((variant) => variant.isDefault)) {
+      cleanedVariants[0].isDefault = true;
+    }
+
+    const firstDefaultIndex = cleanedVariants.findIndex(
+      (variant) => variant.isDefault
+    );
+
+    const normalizedVariants = cleanedVariants.map((variant, index) => ({
+      ...variant,
+      isDefault: index === firstDefaultIndex,
+    }));
+
     toast.loading(editingId ? "Updating product..." : "Adding product...", {
       id: "save",
     });
@@ -184,13 +327,13 @@ await fetchProducts();
 
     try {
       const payload = {
-        ...form,
         name: form.name.trim(),
+        brand: form.brand?.trim() || "",
         category: form.category.trim(),
-        size: form.size?.trim() || "",
         description: form.description?.trim() || "",
         usage: form.usage?.trim() || "",
         image: getSafeImageSrc(form.image),
+        variants: normalizedVariants,
       };
 
       const res = await fetch(
@@ -253,15 +396,49 @@ await fetchProducts();
   };
 
   const handleEdit = (product: Product) => {
+    let safeVariants: Variant[] = [];
+
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      safeVariants = product.variants.map((variant, index) => ({
+        label: variant.label || "",
+        mrp: Number(variant.mrp || 0),
+        price: Number(variant.price || 0),
+        isDefault:
+          typeof variant.isDefault === "boolean"
+            ? variant.isDefault
+            : index === 0,
+        stock: variant.stock || "in_stock",
+      }));
+    } else if (
+      product.size ||
+      typeof product.price === "number" ||
+      typeof product.mrp === "number"
+    ) {
+      safeVariants = [
+        {
+          label: product.size || "Default",
+          mrp: Number(product.mrp || 0),
+          price: Number(product.price || 0),
+          isDefault: true,
+          stock: "in_stock",
+        },
+      ];
+    } else {
+      safeVariants = [createEmptyVariant(true)];
+    }
+
+    if (!safeVariants.some((variant) => variant.isDefault)) {
+      safeVariants[0].isDefault = true;
+    }
+
     setForm({
       name: product.name || "",
+      brand: product.brand || "",
       category: product.category || CATEGORIES[0],
-      mrp: product.mrp || 0,
-      price: product.price || 0,
       usage: product.usage || "",
       description: product.description || "",
       image: getSafeImageSrc(product.image),
-      size: product.size || "",
+      variants: safeVariants,
     });
 
     setEditingId(product._id || null);
@@ -273,14 +450,21 @@ await fetchProducts();
 
     if (!query) return products;
 
-    return products.filter((p) => {
-      const name = p.name?.toLowerCase() || "";
-      const category = p.category?.toLowerCase() || "";
-      const size = p.size?.toLowerCase() || "";
+    return products.filter((product) => {
+      const name = product.name?.toLowerCase() || "";
+      const brand = product.brand?.toLowerCase() || "";
+      const category = product.category?.toLowerCase() || "";
+      const legacySize = product.size?.toLowerCase() || "";
+      const variantLabels = getDisplayVariants(product)
+        .map((variant) => variant.label?.toLowerCase() || "")
+        .join(" ");
+
       return (
         name.includes(query) ||
+        brand.includes(query) ||
         category.includes(query) ||
-        size.includes(query)
+        legacySize.includes(query) ||
+        variantLabels.includes(query)
       );
     });
   }, [products, searchQuery]);
@@ -333,7 +517,7 @@ await fetchProducts();
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
+        <div className="grid gap-6 xl:grid-cols-[520px_minmax(0,1fr)]">
           <form
             onSubmit={handleSubmit}
             className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6"
@@ -353,6 +537,14 @@ await fetchProducts();
                 required
               />
 
+              <input
+                name="brand"
+                placeholder="Brand (Bayer, Syngenta, UPL...)"
+                value={form.brand || ""}
+                onChange={handleChange}
+                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+              />
+
               <select
                 name="category"
                 value={form.category}
@@ -367,32 +559,107 @@ await fetchProducts();
                 ))}
               </select>
 
-              <input
-                name="size"
-                placeholder="Size (1L, 5kg...)"
-                value={form.size || ""}
-                onChange={handleChange}
-                className="w-full rounded-xl border p-3 outline-none focus:border-primary"
-              />
+              <div className="rounded-2xl border border-gray-200 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">
+                      Sizes & Pricing
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Add multiple sizes for one product and choose one default size.
+                    </p>
+                  </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input
-                  name="mrp"
-                  type="number"
-                  placeholder="MRP"
-                  value={form.mrp || 0}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border p-3 outline-none focus:border-primary"
-                />
+                  <button
+                    type="button"
+                    onClick={addVariant}
+                    className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700"
+                  >
+                    <Plus size={14} />
+                    Add Size
+                  </button>
+                </div>
 
-                <input
-                  name="price"
-                  type="number"
-                  placeholder="Offer Price"
-                  value={form.price || 0}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border p-3 outline-none focus:border-primary"
-                />
+                <div className="space-y-3">
+                  {(form.variants || []).map((variant, index) => (
+                    <div
+                      key={`${index}-${variant.label}`}
+                      className="rounded-xl border border-gray-200 p-3"
+                    >
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <input
+                          type="text"
+                          placeholder="Size (100 ml, 500ml, 1L, 5kg, 25kg...)"
+                          value={variant.label}
+                          onChange={(e) =>
+                            updateVariant(index, "label", e.target.value)
+                          }
+                          className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                        />
+
+                        <select
+                          value={variant.stock || "in_stock"}
+                          onChange={(e) =>
+                            updateVariant(
+                              index,
+                              "stock",
+                              e.target.value as Variant["stock"]
+                            )
+                          }
+                          className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                        >
+                          <option value="in_stock">In Stock</option>
+                          <option value="low_stock">Low Stock</option>
+                          <option value="out_of_stock">Out of Stock</option>
+                        </select>
+
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="MRP"
+                          value={variant.mrp}
+                          onChange={(e) =>
+                            updateVariant(index, "mrp", Number(e.target.value))
+                          }
+                          className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                        />
+
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="Offer Price"
+                          value={variant.price}
+                          onChange={(e) =>
+                            updateVariant(index, "price", Number(e.target.value))
+                          }
+                          className="w-full rounded-xl border p-3 outline-none focus:border-primary"
+                        />
+                      </div>
+
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+                          <input
+                            type="radio"
+                            name="defaultVariant"
+                            checked={variant.isDefault}
+                            onChange={() => setDefaultVariant(index)}
+                          />
+                          Set as default size
+                        </label>
+
+                        <button
+                          type="button"
+                          onClick={() => removeVariant(index)}
+                          disabled={(form.variants || []).length === 1}
+                          className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Trash2 size={14} />
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <input
@@ -478,7 +745,7 @@ await fetchProducts();
                 />
                 <input
                   type="text"
-                  placeholder="Search by name, category, size..."
+                  placeholder="Search by name, brand, category, size..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border py-2 pl-9 pr-3 outline-none focus:border-primary"
@@ -487,34 +754,45 @@ await fetchProducts();
             </div>
 
             <div className="table-scroll">
-              <table className="min-w-[900px] text-sm">
+              <table className="min-w-[1100px] text-sm">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
                     <th className="p-3 text-left">Image</th>
                     <th className="p-3 text-left">Name</th>
+                    <th className="p-3 text-left">Brand</th>
                     <th className="p-3 text-left">Category</th>
-                    <th className="p-3 text-left">Size</th>
-                    <th className="p-3 text-left">MRP</th>
-                    <th className="p-3 text-left">Price</th>
+                    <th className="p-3 text-left">Sizes</th>
+                    <th className="p-3 text-left">Default MRP</th>
+                    <th className="p-3 text-left">Default Price</th>
                     <th className="p-3 text-left">Discount</th>
                     <th className="p-3 text-left">Actions</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {filteredProducts.map((p) => {
+                  {filteredProducts.map((product) => {
+                    const displayVariants = getDisplayVariants(product);
+                    const defaultVariant = getDefaultVariant(product);
+
                     const discount =
-                      p.mrp && p.price && p.mrp > 0
-                        ? Math.floor(((p.mrp - p.price) / p.mrp) * 100)
+                      defaultVariant &&
+                      defaultVariant.mrp > 0 &&
+                      defaultVariant.price >= 0 &&
+                      defaultVariant.mrp > defaultVariant.price
+                        ? Math.floor(
+                            ((defaultVariant.mrp - defaultVariant.price) /
+                              defaultVariant.mrp) *
+                              100
+                          )
                         : 0;
 
                     return (
-                      <tr key={p._id} className="border-t align-middle">
+                      <tr key={product._id} className="border-t align-middle">
                         <td className="p-3">
                           <div className="relative h-12 w-12 overflow-hidden rounded-lg border">
                             <Image
-                              src={getSafeImageSrc(p.image)}
-                              alt={p.name}
+                              src={getSafeImageSrc(product.image)}
+                              alt={product.name}
                               fill
                               sizes="48px"
                               className="object-cover"
@@ -522,11 +800,44 @@ await fetchProducts();
                           </div>
                         </td>
 
-                        <td className="p-3 font-medium text-gray-900">{p.name}</td>
-                        <td className="p-3">{p.category}</td>
-                        <td className="p-3">{p.size || "-"}</td>
-                        <td className="p-3">₹ {p.mrp || 0}</td>
-                        <td className="p-3">₹ {p.price || 0}</td>
+                        <td className="p-3 font-medium text-gray-900">
+                          {product.name}
+                        </td>
+
+                        <td className="p-3">{product.brand || "-"}</td>
+
+                        <td className="p-3">{product.category}</td>
+
+                        <td className="p-3">
+                          <div className="flex flex-wrap gap-2">
+                            {displayVariants.length > 0 ? (
+                              displayVariants.map((variant, index) => (
+                                <span
+                                  key={`${variant.label}-${index}`}
+                                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                    variant.isDefault
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-gray-100 text-gray-700"
+                                  }`}
+                                >
+                                  {variant.label}
+                                  {variant.isDefault ? " • Default" : ""}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </div>
+                        </td>
+
+                        <td className="p-3">
+                          ₹ {defaultVariant?.mrp?.toLocaleString("en-IN") || 0}
+                        </td>
+
+                        <td className="p-3">
+                          ₹ {defaultVariant?.price?.toLocaleString("en-IN") || 0}
+                        </td>
+
                         <td className="p-3 font-bold text-red-500">
                           {discount > 0 ? `${discount}%` : "-"}
                         </td>
@@ -535,7 +846,7 @@ await fetchProducts();
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
-                              onClick={() => handleEdit(p)}
+                              onClick={() => handleEdit(product)}
                               className="rounded-lg bg-blue-500 px-3 py-2 text-white hover:bg-blue-600"
                             >
                               <Pencil size={14} />
@@ -543,7 +854,9 @@ await fetchProducts();
 
                             <button
                               type="button"
-                              onClick={() => p._id && handleDelete(p._id)}
+                              onClick={() =>
+                                product._id && handleDelete(product._id)
+                              }
                               className="rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600"
                             >
                               <Trash2 size={14} />
