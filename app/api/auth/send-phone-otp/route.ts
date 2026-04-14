@@ -70,7 +70,8 @@ export async function POST() {
       );
     }
 
-    await sendPhoneOtp(normalizedPhone);
+    const providerResult = await sendPhoneOtp(normalizedPhone);
+    console.log("PHONE OTP PROVIDER RESULT:", providerResult);
 
     user.phoneOtpExpiresAt = new Date(now.getTime() + 5 * 60 * 1000);
     user.phoneOtpAttempts = 0;

@@ -10,7 +10,6 @@ if (!MSG91_TEMPLATE_ID) {
   throw new Error("Missing MSG91_TEMPLATE_ID");
 }
 
-// Normalize Indian phone
 function formatPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
 
@@ -18,14 +17,16 @@ function formatPhone(phone: string) {
     return `${MSG91_COUNTRY_CODE}${digits}`;
   }
 
-  if (digits.startsWith(MSG91_COUNTRY_CODE)) {
+  if (
+    digits.length === MSG91_COUNTRY_CODE.length + 10 &&
+    digits.startsWith(MSG91_COUNTRY_CODE)
+  ) {
     return digits;
   }
 
   throw new Error("Invalid phone number format");
 }
 
-// SEND OTP
 export async function sendPhoneOtp(phone: string) {
   const mobile = formatPhone(phone);
 
@@ -35,16 +36,30 @@ export async function sendPhoneOtp(phone: string) {
     method: "POST",
   });
 
-  const data = await res.json();
+  const rawText = await res.text();
+
+  let data: any = null;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    data = { rawText };
+  }
+
+  console.log("MSG91 SEND OTP STATUS:", res.status);
+  console.log("MSG91 SEND OTP RESPONSE:", data);
+  console.log("MSG91 SEND OTP MOBILE:", mobile);
 
   if (!res.ok || data?.type === "error") {
-    throw new Error(data?.message || "Failed to send OTP");
+    throw new Error(
+      data?.message ||
+        data?.rawText ||
+        "Failed to send OTP from MSG91"
+    );
   }
 
   return data;
 }
 
-// VERIFY OTP
 export async function verifyPhoneOtp(phone: string, otp: string) {
   const mobile = formatPhone(phone);
 
@@ -54,10 +69,25 @@ export async function verifyPhoneOtp(phone: string, otp: string) {
     method: "POST",
   });
 
-  const data = await res.json();
+  const rawText = await res.text();
+
+  let data: any = null;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    data = { rawText };
+  }
+
+  console.log("MSG91 VERIFY OTP STATUS:", res.status);
+  console.log("MSG91 VERIFY OTP RESPONSE:", data);
+  console.log("MSG91 VERIFY OTP MOBILE:", mobile);
 
   if (!res.ok || data?.type === "error") {
-    throw new Error(data?.message || "OTP verification failed");
+    throw new Error(
+      data?.message ||
+        data?.rawText ||
+        "OTP verification failed from MSG91"
+    );
   }
 
   return data;
