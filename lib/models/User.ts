@@ -25,6 +25,39 @@ const UserSchema = new mongoose.Schema(
       index: true,
     },
 
+    address: {
+      addressLine1: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      addressLine2: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      villageOrCity: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      district: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      state: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+      pincode: {
+        type: String,
+        default: "",
+        trim: true,
+      },
+    },
+
     password: {
       type: String,
       required: true,
@@ -36,13 +69,11 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
 
-    // Account activation state
     signupCompleted: {
       type: Boolean,
       default: false,
     },
 
-    // Email verification
     emailVerified: {
       type: Boolean,
       default: false,
@@ -56,7 +87,21 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Phone verification
+    pendingEmail: {
+      type: String,
+      default: null,
+      trim: true,
+      lowercase: true,
+    },
+    emailChangeToken: {
+      type: String,
+      default: null,
+    },
+    emailChangeExpires: {
+      type: Date,
+      default: null,
+    },
+
     phoneVerified: {
       type: Boolean,
       default: false,
@@ -83,7 +128,6 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Login OTP for normal users
     loginOtpCodeHash: {
       type: String,
       default: null,
@@ -98,7 +142,6 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Password reset
     passwordResetToken: {
       type: String,
       default: null,
@@ -108,7 +151,6 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Owner OTP 2FA
     ownerOtpCodeHash: {
       type: String,
       default: null,

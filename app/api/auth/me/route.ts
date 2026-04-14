@@ -40,6 +40,15 @@ export async function GET() {
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
       signupCompleted: user.signupCompleted,
+      pendingEmail: user.pendingEmail || null,
+      address: user.address || {
+        addressLine1: "",
+        addressLine2: "",
+        villageOrCity: "",
+        district: "",
+        state: "",
+        pincode: "",
+      },
     });
   } catch (error: any) {
     console.error("AUTH ME ERROR:", error);

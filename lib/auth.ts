@@ -12,6 +12,15 @@ export type SafeUser = {
   emailVerified: boolean;
   phoneVerified: boolean;
   signupCompleted: boolean;
+  pendingEmail?: string | null;
+  address?: {
+    addressLine1?: string;
+    addressLine2?: string;
+    villageOrCity?: string;
+    district?: string;
+    state?: string;
+    pincode?: string;
+  };
 };
 
 export async function getUser(): Promise<SafeUser | null> {
@@ -36,6 +45,15 @@ export async function getUser(): Promise<SafeUser | null> {
     emailVerified: !!user.emailVerified,
     phoneVerified: !!user.phoneVerified,
     signupCompleted: !!user.signupCompleted,
+    pendingEmail: user.pendingEmail || null,
+    address: user.address || {
+      addressLine1: "",
+      addressLine2: "",
+      villageOrCity: "",
+      district: "",
+      state: "",
+      pincode: "",
+    },
   };
 }
 
