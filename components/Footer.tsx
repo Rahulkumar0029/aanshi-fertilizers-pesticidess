@@ -6,8 +6,8 @@ import {
   Leaf,
   Facebook,
   Instagram,
-  Twitter,
 } from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
 import { BUSINESS_DETAILS } from "@/lib/constants";
 
 export default function Footer() {
@@ -33,27 +33,35 @@ export default function Footer() {
               solutions. Trusted by farmers across India.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 pt-1 sm:gap-4">
               <Link
-                href="#"
-                className="rounded-full p-2 text-gray-300 transition-colors hover:text-[#a8e6cf]"
-                aria-label="Facebook"
+                href="https://www.facebook.com/people/Aanshi-Farms/100092580835985/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Aanshi Farms Facebook"
+                className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#a8e6cf]/40 hover:bg-[#a8e6cf]/10 hover:text-[#a8e6cf] focus:outline-none focus:ring-2 focus:ring-[#a8e6cf]/40"
               >
-                <Facebook size={20} />
+                <Facebook className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
               </Link>
+
               <Link
-                href="#"
-                className="rounded-full p-2 text-gray-300 transition-colors hover:text-[#a8e6cf]"
-                aria-label="Instagram"
+                href="https://www.instagram.com/aanshifarms/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Aanshi Farms Instagram"
+                className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#a8e6cf]/40 hover:bg-[#a8e6cf]/10 hover:text-[#a8e6cf] focus:outline-none focus:ring-2 focus:ring-[#a8e6cf]/40"
               >
-                <Instagram size={20} />
+                <Instagram className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
               </Link>
+
               <Link
-                href="#"
-                className="rounded-full p-2 text-gray-300 transition-colors hover:text-[#a8e6cf]"
-                aria-label="Twitter"
+                href="https://x.com/AanshiFarms"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Aanshi Farms X"
+                className="group inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-300 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#a8e6cf]/40 hover:bg-[#a8e6cf]/10 hover:text-[#a8e6cf] focus:outline-none focus:ring-2 focus:ring-[#a8e6cf]/40"
               >
-                <Twitter size={20} />
+                <FaXTwitter className="h-[18px] w-[18px] transition-transform duration-200 group-hover:scale-110" />
               </Link>
             </div>
           </div>
