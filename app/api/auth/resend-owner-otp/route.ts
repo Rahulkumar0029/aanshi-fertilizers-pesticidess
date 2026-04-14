@@ -59,7 +59,7 @@ export async function POST() {
     await user.save();
 
     const resend = getResend();
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
 
     if (!fromEmail) {
       throw new Error("Missing RESEND_FROM_EMAIL");
@@ -82,12 +82,17 @@ export async function POST() {
     });
 
     return NextResponse.json({
+      success: true,
       message: "A new OTP has been sent",
     });
   } catch (error: any) {
     console.error("RESEND OWNER OTP FAILED:", error);
+
     return NextResponse.json(
-      { error: "Failed to resend OTP", details: error.message },
+      {
+        error: "Failed to resend OTP",
+        details: error?.message || "Unknown error",
+      },
       { status: 500 }
     );
   }

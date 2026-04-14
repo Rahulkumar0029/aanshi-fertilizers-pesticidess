@@ -5,10 +5,6 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/lib/models/User";
 import { getResend } from "@/lib/resend";
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function generateOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -17,27 +13,52 @@ function hashValue(value: string) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function normalizePhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+
+  return digits;
+}
+
+function looksLikeEmail(value: string) {
+  return value.includes("@");
+}
+
 export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const body = await req.json();
-    const rawEmail = body.email;
-    const password = body.password;
+    const body = await req.json().catch(() => null);
 
-    const email =
-      typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
+    const rawIdentifier =
+      typeof body?.email === "string"
+        ? body.email
+        : typeof body?.identifier === "string"
+        ? body.identifier
+        : "";
 
-    if (!email || !password) {
+    const password =
+      typeof body?.password === "string" ? body.password : "";
+
+    const identifier = normalizeIdentifier(rawIdentifier);
+
+    if (!identifier || !password) {
       return NextResponse.json(
-        { error: "Email and password are required" },
+        { error: "Email/phone and password are required" },
         { status: 400 }
       );
     }
 
-    const user = await User.findOne({
-      email: { $regex: `^${escapeRegex(email)}$`, $options: "i" },
-    });
+    const user = looksLikeEmail(identifier)
+      ? await User.findOne({ email: identifier })
+      : await User.findOne({ phone: normalizePhone(identifier) });
 
     if (!user) {
       return NextResponse.json(
@@ -70,7 +91,21 @@ export async function POST(req: Request) {
       );
     }
 
-    // Normal user = direct login
+    // User account must be email verified before login
+    if (user.role === "user" && !user.emailVerified) {
+      return NextResponse.json(
+        {
+          error:
+            "Your email is not verified yet. Please verify your email before logging in.",
+          requiresEmailVerification: true,
+          email: user.email,
+        },
+        { status: 403 }
+      );
+    }
+
+    // Normal user = direct login for now
+    // Later we can upgrade this to password -> OTP choice flow
     if (user.role === "user") {
       const response = NextResponse.json({
         message: "Login successful",
@@ -80,16 +115,28 @@ export async function POST(req: Request) {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          emailVerified: !!user.emailVerified,
+          phoneVerified: !!user.phoneVerified,
+          signupCompleted: !!user.signupCompleted,
         },
       });
 
       response.cookies.set("userId", String(user._id), {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-      });
+  httpOnly: true,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: 60 * 60 * 24 * 7,
+});
+
+// ✅ ADD THIS
+response.cookies.set("role", user.role, {
+  httpOnly: true,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  maxAge: 60 * 60 * 24 * 7,
+});
 
       return response;
     }
@@ -118,7 +165,7 @@ export async function POST(req: Request) {
     await user.save();
 
     const resend = getResend();
-    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
 
     if (!fromEmail) {
       throw new Error("Missing RESEND_FROM_EMAIL");
@@ -159,8 +206,9 @@ export async function POST(req: Request) {
     return response;
   } catch (error: any) {
     console.error("LOGIN FAILED:", error);
+
     return NextResponse.json(
-      { error: "Login failed", details: error.message },
+      { error: "Login failed", details: error?.message || "Unknown error" },
       { status: 500 }
     );
   }

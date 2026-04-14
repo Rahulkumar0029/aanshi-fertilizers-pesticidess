@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getUser } from "@/lib/auth";
 
 export async function GET() {
@@ -20,14 +19,36 @@ export async function GET() {
         expires: new Date(0),
       });
 
+      response.cookies.set("role", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        expires: new Date(0),
+      });
+
       return response;
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json({
+      id: user.id,
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      signupCompleted: user.signupCompleted,
+    });
   } catch (error: any) {
     console.error("AUTH ME ERROR:", error);
+
     return NextResponse.json(
-      { error: "Failed to fetch user", details: error.message },
+      {
+        error: "Failed to fetch user",
+        details: error?.message || "Unknown error",
+      },
       { status: 500 }
     );
   }

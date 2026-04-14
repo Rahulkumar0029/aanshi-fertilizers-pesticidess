@@ -31,6 +31,24 @@ function getSafeRedirect(raw: string | null) {
   return value || "/";
 }
 
+function normalizeIndianPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length === 12 && digits.startsWith("91")) {
+    return digits.slice(2);
+  }
+
+  return digits;
+}
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidIndianPhone(phone: string) {
+  return /^[6-9]\d{9}$/.test(phone);
+}
+
 function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
@@ -38,13 +56,22 @@ function LoginContent() {
   const [otp, setOtp] = useState("");
   const [ownerEmailHint, setOwnerEmailHint] = useState("");
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
 
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+
+  const [loginError, setLoginError] = useState("");
+  const [loginSuccess, setLoginSuccess] = useState("");
+
+  const [signupError, setSignupError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState("");
+
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,7 +82,19 @@ function LoginContent() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setLoading(true);
+    setLoginError("");
+    setLoginSuccess("");
+    setShowResendVerification(false);
+
+    const normalizedIdentifier = identifier.trim();
+
+    if (!normalizedIdentifier || !password.trim()) {
+      setLoginError("Please enter your email/phone and password.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const loginRes = await fetch("/api/auth/login", {
@@ -65,7 +104,7 @@ function LoginContent() {
         },
         credentials: "include",
         body: JSON.stringify({
-          email: email.trim(),
+          identifier: normalizedIdentifier,
           password,
         }),
       });
@@ -73,19 +112,28 @@ function LoginContent() {
       const loginData = await loginRes.json().catch(() => null);
 
       if (!loginRes.ok) {
+        if (loginData?.requiresEmailVerification) {
+          setShowResendVerification(true);
+        }
+
         throw new Error(loginData?.error || "Login failed");
       }
 
       if (loginData?.requiresOtp) {
         setOwnerOtpStep(true);
-        setOwnerEmailHint(loginData?.email || email.trim());
+        setOwnerEmailHint(loginData?.email || normalizedIdentifier);
+        setLoginSuccess(loginData?.message || "OTP sent successfully.");
         return;
       }
+
+      setLoginSuccess(loginData?.message || "Login successful.");
 
       const role = loginData?.user?.role;
 
       if (role === "owner") {
         router.push(redirectPath === "/" ? "/owner" : redirectPath);
+      } else if (role === "admin") {
+        router.push("/admin");
       } else {
         router.push(
           redirectPath.startsWith("/admin") || redirectPath.startsWith("/owner")
@@ -96,8 +144,7 @@ function LoginContent() {
 
       router.refresh();
     } catch (error: any) {
-      console.error("Login failed:", error);
-      alert(error.message || "Login failed. Please try again.");
+      setLoginError(error?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -105,7 +152,10 @@ function LoginContent() {
 
   const handleVerifyOtp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setLoading(true);
+    setLoginError("");
+    setLoginSuccess("");
 
     try {
       const res = await fetch("/api/auth/verify-owner-otp", {
@@ -128,8 +178,7 @@ function LoginContent() {
       router.push(redirectPath === "/" ? "/owner" : redirectPath);
       router.refresh();
     } catch (error: any) {
-      console.error("OTP verification failed:", error);
-      alert(error.message || "OTP verification failed");
+      setLoginError(error?.message || "OTP verification failed");
     } finally {
       setLoading(false);
     }
@@ -137,6 +186,8 @@ function LoginContent() {
 
   const handleResendOtp = async () => {
     setLoading(true);
+    setLoginError("");
+    setLoginSuccess("");
 
     try {
       const res = await fetch("/api/auth/resend-owner-otp", {
@@ -150,10 +201,9 @@ function LoginContent() {
         throw new Error(data?.error || "Failed to resend OTP");
       }
 
-      alert(data?.message || "A new OTP has been sent");
+      setLoginSuccess(data?.message || "A new OTP has been sent.");
     } catch (error: any) {
-      console.error("Resend OTP failed:", error);
-      alert(error.message || "Failed to resend OTP");
+      setLoginError(error?.message || "Failed to resend OTP");
     } finally {
       setLoading(false);
     }
@@ -161,7 +211,46 @@ function LoginContent() {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setLoading(true);
+    setSignupError("");
+    setSignupSuccess("");
+    setShowResendVerification(false);
+
+    const normalizedEmail = signupEmail.trim().toLowerCase();
+    const normalizedPhone = normalizeIndianPhone(signupPhone);
+    const trimmedName = signupName.trim();
+    const trimmedPassword = signupPassword.trim();
+
+    if (!trimmedName || !normalizedEmail || !normalizedPhone || !trimmedPassword) {
+      setSignupError("All fields are required.");
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedName.length < 2) {
+      setSignupError("Please enter a valid full name.");
+      setLoading(false);
+      return;
+    }
+
+    if (!isValidEmail(normalizedEmail)) {
+      setSignupError("Please enter a valid email address.");
+      setLoading(false);
+      return;
+    }
+
+    if (!isValidIndianPhone(normalizedPhone)) {
+      setSignupError("Please enter a valid 10-digit Indian mobile number.");
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedPassword.length < 8) {
+      setSignupError("Password must be at least 8 characters long.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/auth/signup", {
@@ -170,10 +259,10 @@ function LoginContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: signupName.trim(),
-          email: signupEmail.trim(),
-          phone: signupPhone.trim(),
-          password: signupPassword,
+          name: trimmedName,
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          password: trimmedPassword,
         }),
       });
 
@@ -183,15 +272,81 @@ function LoginContent() {
         throw new Error(data?.error || "Signup failed");
       }
 
-      alert("Signup successful! Please login now.");
+      setSignupSuccess(
+        data?.message ||
+          "Account created successfully. Please verify your email to continue."
+      );
+
+      setShowResendVerification(true);
       setIsSignup(false);
-      setEmail(signupEmail.trim());
+
+      setIdentifier(normalizedEmail);
       setPassword("");
+
+      setSignupName("");
+      setSignupEmail(normalizedEmail);
+      setSignupPhone("");
+      setSignupPassword("");
     } catch (error: any) {
-      console.error("Signup failed:", error);
-      alert(error.message || "Signup failed");
+      setSignupError(error?.message || "Signup failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    const emailToUse =
+      signupEmail.trim().toLowerCase() || identifier.trim().toLowerCase();
+
+    if (!emailToUse) {
+      if (isSignup) {
+        setSignupError("Please enter your email first.");
+      } else {
+        setLoginError("Please enter your email first.");
+      }
+      return;
+    }
+
+    setResendLoading(true);
+    setLoginError("");
+    setSignupError("");
+    setLoginSuccess("");
+    setSignupSuccess("");
+
+    try {
+      const res = await fetch("/api/auth/resend-verification-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: emailToUse,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to resend verification email");
+      }
+
+      if (isSignup) {
+        setSignupSuccess(
+          data?.message || "A new verification email has been sent successfully."
+        );
+      } else {
+        setLoginSuccess(
+          data?.message || "A new verification email has been sent successfully."
+        );
+      }
+    } catch (error: any) {
+      if (isSignup) {
+        setSignupError(error?.message || "Failed to resend verification email");
+      } else {
+        setLoginError(error?.message || "Failed to resend verification email");
+      }
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -221,7 +376,7 @@ function LoginContent() {
             </div>
 
             <p className="text-xl font-medium uppercase tracking-wide text-[#a8e6cf]">
-              Fertilizers & Pesticides
+              Fertilizers &amp; Pesticides
             </p>
 
             <p className="max-w-md pt-4 text-lg leading-relaxed text-gray-200">
@@ -243,7 +398,7 @@ function LoginContent() {
             <Leaf className="mb-2 h-12 w-12 text-[#1a2e1a]" />
             <h2 className="text-2xl font-bold text-[#1a2e1a]">AANSHI</h2>
             <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
-              Fertilizers & Pesticides
+              Fertilizers &amp; Pesticides
             </p>
           </div>
 
@@ -252,7 +407,11 @@ function LoginContent() {
               <div className="flex w-full max-w-md rounded-2xl bg-white p-1 shadow">
                 <button
                   type="button"
-                  onClick={() => setIsSignup(false)}
+                  onClick={() => {
+                    setIsSignup(false);
+                    setSignupError("");
+                    setSignupSuccess("");
+                  }}
                   className={`w-1/2 rounded-xl py-3 font-semibold transition ${
                     !isSignup
                       ? "bg-primary text-white shadow"
@@ -264,7 +423,11 @@ function LoginContent() {
 
                 <button
                   type="button"
-                  onClick={() => setIsSignup(true)}
+                  onClick={() => {
+                    setIsSignup(true);
+                    setLoginError("");
+                    setLoginSuccess("");
+                  }}
                   className={`w-1/2 rounded-xl py-3 font-semibold transition ${
                     isSignup
                       ? "bg-primary text-white shadow"
@@ -308,6 +471,18 @@ function LoginContent() {
                   />
                 </div>
 
+                {loginError ? (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                    {loginError}
+                  </div>
+                ) : null}
+
+                {loginSuccess ? (
+                  <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                    {loginSuccess}
+                  </div>
+                ) : null}
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -331,6 +506,8 @@ function LoginContent() {
                     onClick={() => {
                       setOwnerOtpStep(false);
                       setOtp("");
+                      setLoginError("");
+                      setLoginSuccess("");
                     }}
                     className="text-sm font-semibold text-gray-600 hover:underline"
                   >
@@ -345,7 +522,7 @@ function LoginContent() {
                 animate={{ rotateY: isSignup ? 180 : 0 }}
                 transition={{ duration: 0.7, ease: "easeInOut" }}
                 style={{ transformStyle: "preserve-3d" }}
-                className="relative min-h-[650px]"
+                className="relative min-h-[760px]"
               >
                 <div
                   className="absolute inset-0 rounded-3xl bg-white p-8 shadow-2xl md:p-10 [backface-visibility:hidden]"
@@ -356,27 +533,35 @@ function LoginContent() {
                       Welcome Back
                     </h2>
                     <p className="text-gray-500">
-                      Login to continue your agricultural journey with Aanshi.
+                      Login with your registered email or phone to continue.
                     </p>
+                  </div>
+
+                  <div className="mb-6 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-800">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      You can explore the website without login. Login is only
+                      needed for account-based actions like inquiries and order-related features.
+                    </span>
                   </div>
 
                   <form onSubmit={handleLogin} className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <label className="ml-1 text-sm font-semibold text-gray-700">
-                          Email
+                          Email or Phone
                         </label>
                         <div className="group relative">
                           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                            <Mail size={20} />
+                            <User size={20} />
                           </div>
                           <input
-                            type="email"
+                            type="text"
                             required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                             className="block w-full rounded-2xl border border-gray-200 bg-white py-3 pl-10 pr-4 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                            placeholder="Enter your email"
+                            placeholder="Enter email or phone"
                           />
                         </div>
                       </div>
@@ -400,6 +585,31 @@ function LoginContent() {
                         </div>
                       </div>
                     </div>
+
+                    {loginError ? (
+                      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                        {loginError}
+                      </div>
+                    ) : null}
+
+                    {loginSuccess ? (
+                      <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                        {loginSuccess}
+                      </div>
+                    ) : null}
+
+                    {showResendVerification ? (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading}
+                        className="w-full rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {resendLoading
+                          ? "Sending verification email..."
+                          : "Resend Verification Email"}
+                      </button>
+                    ) : null}
 
                     <div className="ml-1 flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -470,8 +680,7 @@ function LoginContent() {
                       Join Aanshi Family
                     </h2>
                     <p className="text-gray-500">
-                      Create your account and unlock product inquiries, wholesale
-                      support, and faster ordering.
+                      Create your account to send product inquiries, manage your activity, and get faster support.
                     </p>
                   </div>
 
@@ -552,6 +761,31 @@ function LoginContent() {
                       </div>
                     </div>
 
+                    {signupError ? (
+                      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                        {signupError}
+                      </div>
+                    ) : null}
+
+                    {signupSuccess ? (
+                      <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                        {signupSuccess}
+                      </div>
+                    ) : null}
+
+                    {showResendVerification ? (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading}
+                        className="w-full rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {resendLoading
+                          ? "Sending verification email..."
+                          : "Resend Verification Email"}
+                      </button>
+                    ) : null}
+
                     <button
                       type="submit"
                       disabled={loading}
@@ -576,7 +810,11 @@ function LoginContent() {
                       Already registered?{" "}
                       <button
                         type="button"
-                        onClick={() => setIsSignup(false)}
+                        onClick={() => {
+                          setIsSignup(false);
+                          setSignupError("");
+                          setSignupSuccess("");
+                        }}
                         className="font-semibold text-primary hover:underline"
                       >
                         Login now

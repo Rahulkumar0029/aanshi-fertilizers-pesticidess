@@ -22,9 +22,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const otp =
-      typeof body.otp === "string" ? body.otp.trim() : "";
+    const body = await req.json().catch(() => null);
+    const otp = typeof body?.otp === "string" ? body.otp.trim() : "";
 
     if (!otp || otp.length !== 6) {
       return NextResponse.json(
@@ -86,16 +85,28 @@ export async function POST(req: Request) {
     await user.save();
 
     const response = NextResponse.json({
+      success: true,
       message: "Owner verification successful",
       user: {
         _id: String(user._id),
         name: user.name,
         email: user.email,
         role: user.role,
+        emailVerified: !!user.emailVerified,
+        phoneVerified: !!user.phoneVerified,
+        signupCompleted: !!user.signupCompleted,
       },
     });
 
     response.cookies.set("userId", String(user._id), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    response.cookies.set("role", user.role, {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
@@ -114,8 +125,12 @@ export async function POST(req: Request) {
     return response;
   } catch (error: any) {
     console.error("VERIFY OWNER OTP FAILED:", error);
+
     return NextResponse.json(
-      { error: "Failed to verify OTP", details: error.message },
+      {
+        error: "Failed to verify OTP",
+        details: error?.message || "Unknown error",
+      },
       { status: 500 }
     );
   }

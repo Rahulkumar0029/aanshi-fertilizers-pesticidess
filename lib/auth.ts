@@ -9,6 +9,9 @@ export type SafeUser = {
   email?: string;
   phone?: string;
   role: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  signupCompleted: boolean;
 };
 
 export async function getUser(): Promise<SafeUser | null> {
@@ -30,6 +33,9 @@ export async function getUser(): Promise<SafeUser | null> {
     email: user.email,
     phone: user.phone,
     role: user.role,
+    emailVerified: !!user.emailVerified,
+    phoneVerified: !!user.phoneVerified,
+    signupCompleted: !!user.signupCompleted,
   };
 }
 

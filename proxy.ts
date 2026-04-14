@@ -54,7 +54,8 @@ export async function proxy(request: NextRequest) {
     pathname === "/about" ||
     pathname === "/wholesale" ||
     pathname === "/forgot-password" ||
-    pathname.startsWith("/reset-password/");
+    pathname.startsWith("/reset-password/") ||
+    pathname.startsWith("/verify-email/");
 
   if (isPublicRoute) {
     if ((isLoginRoute || isRegisterRoute) && isLoggedIn) {
@@ -110,6 +111,7 @@ export const config = {
     "/register",
     "/forgot-password",
     "/reset-password/:path*",
+    "/verify-email/:path*",
     "/owner/:path*",
     "/admin/:path*",
     "/my-orders/:path*",
