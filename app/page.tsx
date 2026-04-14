@@ -198,7 +198,9 @@ export default function Home() {
                   <h3 className="text-base font-bold text-foreground sm:text-lg">
                     {stat.label}
                   </h3>
-                  <p className="text-sm text-gray-500">{stat.sub}</p>
+                  <p className="text-sm text-gray-600 sm:text-[15px]">
+  {stat.sub}
+</p>
                 </div>
               </div>
             ))}
