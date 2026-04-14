@@ -1,9 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   Phone,
   Mail,
   MapPin,
-  Leaf,
   Facebook,
   Instagram,
 } from "lucide-react";
@@ -16,14 +16,27 @@ export default function Footer() {
       <div className="container-app">
         <div className="grid grid-cols-1 gap-10 pb-10 sm:gap-12 lg:grid-cols-4">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-3">
-              <Leaf className="h-9 w-9 shrink-0 text-[#a8e6cf] sm:h-10 sm:w-10" />
+            <Link
+              href="/"
+              className="flex items-center gap-3"
+              aria-label="Aanshi Farms Home"
+            >
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/10 sm:h-16 sm:w-16">
+                <Image
+                  src="/logo.png"
+                  alt="Aanshi Farms Logo"
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+              </div>
+
               <div className="flex min-w-0 flex-col">
-                <span className="truncate text-xl font-bold tracking-tight sm:text-2xl">
+                <span className="truncate text-2xl font-black tracking-tight sm:text-3xl">
                   AANSHI
                 </span>
-                <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-gray-300 sm:text-[11px]">
-                  Fertilizers & Pesticides
+                <span className="pt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-300 sm:text-xs">
+                  Fertilizers &amp; Pesticides
                 </span>
               </div>
             </Link>
@@ -77,26 +90,17 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/products"
-                  className="transition-colors hover:text-white"
-                >
+                <Link href="/products" className="transition-colors hover:text-white">
                   Our Products
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/wholesale"
-                  className="transition-colors hover:text-white"
-                >
+                <Link href="/wholesale" className="transition-colors hover:text-white">
                   Wholesale Inquiry
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/contact"
-                  className="transition-colors hover:text-white"
-                >
+                <Link href="/contact" className="transition-colors hover:text-white">
                   Contact Us
                 </Link>
               </li>
@@ -187,7 +191,7 @@ export default function Footer() {
 
         <div className="border-t border-white/10 pt-6 text-center text-xs leading-6 text-gray-400 sm:text-sm">
           <p>
-            © {new Date().getFullYear()} Aanshi Fertilizers & Pesticides. All
+            © {new Date().getFullYear()} Aanshi Fertilizers &amp; Pesticides. All
             rights reserved.
             <br />
             Government Approved • Trusted by Farmers 🌱

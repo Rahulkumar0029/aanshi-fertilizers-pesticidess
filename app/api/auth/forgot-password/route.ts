@@ -4,10 +4,6 @@ import { connectDB } from "@/lib/mongodb";
 import User from "@/lib/models/User";
 import { getResend } from "@/lib/resend";
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function getBaseUrl() {
   const appUrl = process.env.APP_URL?.trim();
 
@@ -20,8 +16,6 @@ function getBaseUrl() {
 
 export async function POST(req: Request) {
   try {
-    console.log("FORGOT PASSWORD API HIT");
-
     await connectDB();
 
     const body = await req.json().catch(() => null);
@@ -30,29 +24,23 @@ export async function POST(req: Request) {
     const email =
       typeof rawEmail === "string" ? rawEmail.trim().toLowerCase() : "";
 
-    console.log("Incoming email:", email);
-
     if (!email) {
       return NextResponse.json(
-        { error: "Email is required" },
+        { success: false, error: "Email is required" },
         { status: 400 }
       );
     }
 
-    const genericResponse = NextResponse.json({
-      success: true,
-      message:
-        "If an account with that email exists, a password reset link has been sent.",
-    });
-
-    const user = await User.findOne({
-      email: { $regex: `^${escapeRegex(email)}$`, $options: "i" },
-    });
-
-    console.log("User found:", !!user);
+    const user = await User.findOne({ email });
 
     if (!user) {
-      return genericResponse;
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Account not found. Please create an account first.",
+        },
+        { status: 404 }
+      );
     }
 
     const rawToken = crypto.randomBytes(32).toString("hex");
@@ -65,11 +53,11 @@ export async function POST(req: Request) {
 
     user.passwordResetToken = hashedToken;
     user.passwordResetExpires = expiresAt;
+
     await user.save();
 
     const resend = getResend();
     const baseUrl = getBaseUrl();
-
     const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
 
     if (!fromEmail) {
@@ -77,17 +65,6 @@ export async function POST(req: Request) {
     }
 
     const resetUrl = `${baseUrl}/reset-password/${rawToken}`;
-
-    console.log("APP_URL:", baseUrl);
-    console.log("FROM_EMAIL:", fromEmail);
-    console.log("HAS_RESEND_KEY:", !!process.env.RESEND_API_KEY);
-    console.log("RESET_URL:", resetUrl);
-    console.log("User email value:", user.email);
-    console.log("User name value:", user.name);
-
-    console.log("About to send email...");
-    console.log("Sending to:", user.email);
-    console.log("Using from:", fromEmail);
 
     const emailResult = await resend.emails.send({
       from: fromEmail,
@@ -122,22 +99,20 @@ export async function POST(req: Request) {
       }, reset your password using this link: ${resetUrl}. This link expires in 30 minutes.`,
     });
 
-    console.log("Full RESEND RESULT:", JSON.stringify(emailResult, null, 2));
-
     if ((emailResult as any)?.error) {
-      throw new Error(
-        JSON.stringify((emailResult as any).error, null, 2)
-      );
+      throw new Error(JSON.stringify((emailResult as any).error, null, 2));
     }
 
-    return genericResponse;
+    return NextResponse.json({
+      success: true,
+      message: "Password reset link sent successfully.",
+    });
   } catch (error: any) {
-    console.error("FORGOT PASSWORD ERROR FULL:", error);
-    console.error("FORGOT PASSWORD ERROR MESSAGE:", error?.message);
-    console.error("FORGOT PASSWORD ERROR STACK:", error?.stack);
+    console.error("FORGOT PASSWORD ERROR:", error);
 
     return NextResponse.json(
       {
+        success: false,
         error: "Failed to process password reset request",
         details: error?.message || "Unknown error",
       },

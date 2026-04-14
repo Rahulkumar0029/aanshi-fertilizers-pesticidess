@@ -14,6 +14,10 @@ export async function POST(req: Request) {
       typeof body?.token === "string" ? body.token.trim() : "";
     const password =
       typeof body?.password === "string" ? body.password.trim() : "";
+    const confirmPassword =
+      typeof body?.confirmPassword === "string"
+        ? body.confirmPassword.trim()
+        : "";
 
     if (!rawToken) {
       return NextResponse.json(
@@ -25,6 +29,13 @@ export async function POST(req: Request) {
     if (!password || password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters long" },
+        { status: 400 }
+      );
+    }
+
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: "Passwords do not match" },
         { status: 400 }
       );
     }
@@ -49,8 +60,8 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     user.password = hashedPassword;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
 
     await user.save();
 

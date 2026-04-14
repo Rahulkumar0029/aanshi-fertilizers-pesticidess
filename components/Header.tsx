@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { Menu, X, Leaf } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -74,15 +75,29 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/85">
       <div className="container-app">
-        <div className="flex min-h-16 items-center justify-between gap-3 py-3 sm:py-4">
-          <Link href="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Leaf className="h-7 w-7 shrink-0 text-primary sm:h-8 sm:w-8" />
-            <div className="flex min-w-0 flex-col">
-              <span className="truncate text-lg font-bold leading-tight text-primary sm:text-xl">
+        <div className="flex min-h-16 items-center justify-between gap-3 py-3 sm:min-h-20 sm:py-4">
+          <Link
+            href="/"
+            className="flex min-w-0 items-center gap-3 sm:gap-4"
+            aria-label="Aanshi Farms Home"
+          >
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl ring-1 ring-black/5 sm:h-14 sm:w-14">
+              <Image
+                src="/logo.png"
+                alt="Aanshi Farms Logo"
+                fill
+                sizes="56px"
+                className="object-cover"
+                priority
+              />
+            </div>
+
+            <div className="flex min-w-0 flex-col justify-center">
+              <span className="truncate text-xl font-black leading-none tracking-tight text-primary sm:text-3xl">
                 AANSHI
               </span>
-              <span className="truncate text-[10px] font-medium uppercase tracking-[0.18em] text-secondary sm:text-xs">
-                Fertilizers & Pesticides
+              <span className="truncate pt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-secondary sm:text-xs">
+                Fertilizers &amp; Pesticides
               </span>
             </div>
           </Link>
@@ -172,4 +187,3 @@ export default function Header() {
     </header>
   );
 }
-

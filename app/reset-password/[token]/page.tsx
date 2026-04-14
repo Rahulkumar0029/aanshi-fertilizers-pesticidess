@@ -47,6 +47,7 @@ export default function ResetPasswordPage() {
         body: JSON.stringify({
           token,
           password,
+          confirmPassword,
         }),
       });
 

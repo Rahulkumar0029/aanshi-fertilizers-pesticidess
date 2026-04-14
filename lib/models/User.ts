@@ -29,6 +29,16 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
 
+    // Password reset
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: null,
+    },
+
     // Owner OTP 2FA
     ownerOtpCodeHash: {
       type: String,
