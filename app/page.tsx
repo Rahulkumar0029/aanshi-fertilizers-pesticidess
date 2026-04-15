@@ -136,7 +136,7 @@ export default function Home() {
               {role === "user" ? (
                 <Link
                   href="/my-orders"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
                 >
                   My Activity <Clock size={18} />
                 </Link>
