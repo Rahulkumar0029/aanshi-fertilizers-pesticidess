@@ -143,9 +143,9 @@ export default function Home() {
               ) : (
                 <Link
                   href="/wholesale"
-                  className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-primary transition-all hover:bg-gray-100 sm:px-8 sm:py-4 sm:text-base"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-bold text-white transition-all hover:bg-primary/90 hover:translate-x-1 sm:px-8 sm:py-4 sm:text-base"
                 >
-                  Wholesale Inquiry
+                  Wholesale Inquiry <ArrowRight size={18} />
                 </Link>
               )}
 
@@ -214,7 +214,7 @@ export default function Home() {
             <h2 className="section-title font-bold text-foreground">
               Complete Farming Solutions
             </h2>
-            <p className="mx-auto max-w-2xl text-sm text-gray-600 sm:text-base">
+            <p className="mx-auto max-w-2xl text-sm text-gray-700 sm:text-base">
               We offer standard and customized products for every Indian farmer.
             </p>
           </div>

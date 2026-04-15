@@ -191,7 +191,7 @@ export default function Header() {
             {!loadingRole && !isLoggedIn ? (
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 py-3 text-base font-bold text-white shadow-md transition-all hover:scale-[1.05] hover:shadow-lg"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 py-3 text-base font-bold !text-white shadow-md transition-all hover:scale-[1.05] hover:shadow-lg"
               >
                 Login
               </Link>
