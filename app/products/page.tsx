@@ -32,6 +32,15 @@ type Product = {
   price?: number;
 };
 
+type UserAddress = {
+  addressLine1?: string;
+  addressLine2?: string;
+  villageOrCity?: string;
+  district?: string;
+  state?: string;
+  pincode?: string;
+};
+
 type AuthUser = {
   _id?: string;
   id?: string;
@@ -39,6 +48,7 @@ type AuthUser = {
   email?: string;
   phone: string;
   role: string;
+  address?: UserAddress;
 };
 
 type InquiryProduct = Product & {
@@ -94,6 +104,22 @@ function getListingPrice(product: Product) {
   }
 
   return typeof product.price === "number" ? product.price : 0;
+}
+
+function formatAddress(address?: UserAddress) {
+  if (!address) return "";
+
+  return [
+    address.addressLine1,
+    address.addressLine2,
+    address.villageOrCity,
+    address.district,
+    address.state,
+    address.pincode,
+  ]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 function ProductsContent() {
@@ -317,6 +343,7 @@ function ProductsContent() {
 
       const user: AuthUser = await authRes.json();
       const userId = user.id || user._id;
+      const formattedAddress = formatAddress(user.address);
 
       if (!userId || !user.name || !user.phone) {
         alert("Your account details are incomplete.");
@@ -367,6 +394,9 @@ function ProductsContent() {
       });
 
       const message = buildProductInquiryMessage({
+        customerName: user.name,
+        customerPhone: user.phone,
+        customerAddress: formattedAddress,
         productName: product.name,
         category: product.category,
         brand: product.brand,
@@ -401,31 +431,31 @@ function ProductsContent() {
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:max-w-[760px]">
-  <div className="relative flex-1">
-    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-    <input
-      type="text"
-      placeholder="Search by name, brand, size..."
-      className="w-full rounded-xl border py-3 pl-12 pr-4 outline-none"
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-    />
-  </div>
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, brand, size..."
+                    className="w-full rounded-xl border py-3 pl-12 pr-4 outline-none"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
 
-  <button
-    type="button"
-    onClick={openFilters}
-    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-medium text-gray-800 transition hover:bg-gray-50 sm:min-w-[130px]"
-  >
-    <SlidersHorizontal size={18} />
-    Filter
-    {activeFilterCount > 0 ? (
-      <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
-        {activeFilterCount}
-      </span>
-    ) : null}
-  </button>
-</div>
+                <button
+                  type="button"
+                  onClick={openFilters}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-medium text-gray-800 transition hover:bg-gray-50 sm:min-w-[130px]"
+                >
+                  <SlidersHorizontal size={18} />
+                  Filter
+                  {activeFilterCount > 0 ? (
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+                      {activeFilterCount}
+                    </span>
+                  ) : null}
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">

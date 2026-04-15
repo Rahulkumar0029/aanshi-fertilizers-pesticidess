@@ -31,23 +31,23 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      id: user.id,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      emailVerified: user.emailVerified,
-      phoneVerified: user.phoneVerified,
-      signupCompleted: user.signupCompleted,
+      id: user.id || user._id?.toString?.() || "",
+      _id: user._id?.toString?.() || user.id || "",
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || "user",
+      emailVerified: Boolean(user.emailVerified),
+      phoneVerified: Boolean(user.phoneVerified),
+      signupCompleted: Boolean(user.signupCompleted),
       pendingEmail: user.pendingEmail || null,
-      address: user.address || {
-        addressLine1: "",
-        addressLine2: "",
-        villageOrCity: "",
-        district: "",
-        state: "",
-        pincode: "",
+      address: {
+        addressLine1: user.address?.addressLine1 || "",
+        addressLine2: user.address?.addressLine2 || "",
+        villageOrCity: user.address?.villageOrCity || "",
+        district: user.address?.district || "",
+        state: user.address?.state || "",
+        pincode: user.address?.pincode || "",
       },
     });
   } catch (error: any) {

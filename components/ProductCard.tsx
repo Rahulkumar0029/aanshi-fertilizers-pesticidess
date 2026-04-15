@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { PhoneForwarded } from "lucide-react";
 
 type ProductVariant = {
@@ -22,8 +23,6 @@ type Product = {
   description?: string;
   image?: string;
   variants?: ProductVariant[];
-
-  // backward compatibility for old products
   size?: string;
   mrp?: number;
   price?: number;
@@ -35,6 +34,13 @@ type ProductCardProps = {
     product: Product & { selectedVariant?: ProductVariant | null }
   ) => void;
   isLoading?: boolean;
+};
+
+type AuthUser = {
+  id?: string;
+  name?: string;
+  phone?: string;
+  address?: string;
 };
 
 const FALLBACK_IMAGE = "/placeholder.png";
@@ -52,7 +58,6 @@ function getDefaultVariant(product: Product): ProductVariant | null {
     );
   }
 
-  // backward compatibility for old products
   if (
     product.size ||
     typeof product.price === "number" ||
@@ -104,16 +109,60 @@ export default function ProductCard({
   onInquiry,
   isLoading = false,
 }: ProductCardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const defaultVariant = useMemo(() => getDefaultVariant(product), [product]);
   const displayVariants = useMemo(() => getDisplayVariants(product), [product]);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     defaultVariant
   );
+  const [authChecked, setAuthChecked] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     setSelectedVariant(defaultVariant);
   }, [defaultVariant, product._id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          if (!ignore) {
+            setUser(null);
+            setAuthChecked(true);
+          }
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!ignore) {
+          setUser(data ?? null);
+          setAuthChecked(true);
+        }
+      } catch {
+        if (!ignore) {
+          setUser(null);
+          setAuthChecked(true);
+        }
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const discount = getDiscount(selectedVariant?.mrp, selectedVariant?.price);
 
@@ -121,6 +170,21 @@ export default function ProductCard({
     product.usage ||
     product.description ||
     "Product details available on view page.";
+
+  const handleProtectedInquiry = () => {
+    if (!authChecked) return;
+
+    if (!user) {
+      const redirect = encodeURIComponent(pathname || `/products/${product._id}`);
+      router.push(`/login?redirect=${redirect}`);
+      return;
+    }
+
+    onInquiry({
+      ...product,
+      selectedVariant,
+    });
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md transition hover:-translate-y-1 hover:shadow-xl">
@@ -218,17 +282,20 @@ export default function ProductCard({
 
           <button
             type="button"
-            onClick={() =>
-              onInquiry({
-                ...product,
-                selectedVariant,
-              })
+            onClick={handleProtectedInquiry}
+            disabled={
+              isLoading ||
+              !authChecked ||
+              selectedVariant?.stock === "out_of_stock"
             }
-            disabled={isLoading || selectedVariant?.stock === "out_of_stock"}
             className="flex items-center justify-center gap-2 rounded-lg bg-green-500 py-3 text-sm font-bold text-white shadow-md transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-70 sm:text-base"
           >
             <PhoneForwarded size={16} />
-            {isLoading ? "Opening WhatsApp..." : "WhatsApp Inquiry"}
+            {!authChecked
+              ? "Checking..."
+              : isLoading
+              ? "Opening WhatsApp..."
+              : "WhatsApp Inquiry"}
           </button>
         </div>
       </div>

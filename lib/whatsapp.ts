@@ -3,6 +3,7 @@ import { BUSINESS_DETAILS } from "@/lib/constants";
 type ProductInquiryInput = {
   customerName?: string;
   customerPhone?: string;
+  customerAddress?: string;
   productName: string;
   category?: string;
   brand?: string;
@@ -74,6 +75,7 @@ export function buildProductInquiryMessage(input: ProductInquiryInput) {
     `My details:`,
     `• Name: ${input.customerName || "Customer"}`,
     input.customerPhone ? `• Phone: ${input.customerPhone}` : "",
+    input.customerAddress ? `• Address: ${input.customerAddress}` : "",
     ``,
     `Please share:`,
     `• current availability`,

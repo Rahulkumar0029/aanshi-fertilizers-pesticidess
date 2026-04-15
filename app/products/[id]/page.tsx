@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
+import { notFound, useParams, useRouter } from "next/navigation";
 import { BUSINESS_DETAILS } from "@/lib/constants";
 import { buildProductInquiryMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 
@@ -25,10 +25,28 @@ type Product = {
   image?: string;
   variants?: ProductVariant[];
 
-  // backward compatibility for old products
   size?: string;
   mrp?: number;
   price?: number;
+};
+
+type UserAddress = {
+  addressLine1?: string;
+  addressLine2?: string;
+  villageOrCity?: string;
+  district?: string;
+  state?: string;
+  pincode?: string;
+};
+
+type AuthUser = {
+  _id?: string;
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  address?: UserAddress;
 };
 
 function getDefaultVariant(product: Product): ProductVariant | null {
@@ -85,7 +103,24 @@ function getDiscount(mrp?: number, price?: number) {
   return Math.floor(((mrp - price) / mrp) * 100);
 }
 
+function formatAddress(address?: UserAddress) {
+  if (!address) return "";
+
+  return [
+    address.addressLine1,
+    address.addressLine2,
+    address.villageOrCity,
+    address.district,
+    address.state,
+    address.pincode,
+  ]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 export default function ProductDetailsPage() {
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
@@ -95,6 +130,9 @@ export default function ProductDetailsPage() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     null
   );
+  const [authChecked, setAuthChecked] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -128,6 +166,48 @@ export default function ProductDetailsPage() {
 
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          if (!ignore) {
+            setUser(null);
+            setAuthChecked(true);
+          }
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!ignore) {
+          setUser(data ?? null);
+          setAuthChecked(true);
+        }
+      } catch (error) {
+        console.error("Failed to fetch auth user:", error);
+
+        if (!ignore) {
+          setUser(null);
+          setAuthChecked(true);
+        }
+      }
+    };
+
+    fetchCurrentUser();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const displayVariants = useMemo(
     () => (product ? getDisplayVariants(product) : []),
@@ -173,17 +253,90 @@ export default function ProductDetailsPage() {
 
   const discount = getDiscount(selectedVariant?.mrp, selectedVariant?.price);
 
-  const whatsappUrl = buildWhatsAppUrl(
-    buildProductInquiryMessage({
-      productName: product.name,
-      category: product.category,
-      brand: product.brand,
-      size: selectedVariant?.label,
-      price: selectedVariant?.price,
-      mrp: selectedVariant?.mrp,
-      description: product.description || product.usage,
-    })
-  );
+  const handleProtectedWhatsApp = async () => {
+    try {
+      if (!authChecked) return;
+
+      if (!user) {
+        router.push(`/login?redirect=${encodeURIComponent(`/products/${product._id}`)}`);
+        return;
+      }
+
+      if (!user.name || !user.phone) {
+        alert("Your account details are incomplete.");
+        return;
+      }
+
+      setActionLoading(true);
+
+      const formattedAddress = formatAddress(user.address);
+
+      const inquiryPayload = {
+        userId: user.id || user._id,
+        userName: user.name,
+        phone: user.phone,
+        productId: product._id,
+        productName: product.name,
+        productCategory: product.category,
+        selectedSize: selectedVariant?.label || "",
+        selectedPrice: selectedVariant?.price || 0,
+        selectedMrp: selectedVariant?.mrp || 0,
+        brand: product.brand || "",
+        status: "pending",
+      };
+
+      await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(inquiryPayload),
+      });
+
+      const orderPayload = {
+        userId: user.id || user._id,
+        productId: product._id,
+        productName: product.name,
+        productCategory: product.category,
+        selectedSize: selectedVariant?.label || "",
+        selectedPrice: selectedVariant?.price || 0,
+        selectedMrp: selectedVariant?.mrp || 0,
+        brand: product.brand || "",
+        customerName: user.name,
+        phone: user.phone,
+        status: "Pending",
+        source: "WhatsApp",
+      };
+
+      await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(orderPayload),
+      });
+
+      const whatsappUrl = buildWhatsAppUrl(
+        buildProductInquiryMessage({
+          customerName: user.name,
+          customerPhone: user.phone,
+          customerAddress: formattedAddress,
+          productName: product.name,
+          category: product.category,
+          brand: product.brand,
+          size: selectedVariant?.label,
+          price: selectedVariant?.price,
+          mrp: selectedVariant?.mrp,
+          description: product.description || product.usage,
+        })
+      );
+
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      console.error("Product detail inquiry error:", error);
+      alert("Something went wrong.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f8faf8] py-8 sm:py-10 lg:py-12">
@@ -307,14 +460,18 @@ export default function ProductDetailsPage() {
                   <p className="break-all">Email: {BUSINESS_DETAILS.email}</p>
                 </div>
 
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl bg-green-500 py-4 text-center font-bold text-white hover:bg-green-600"
+                <button
+                  type="button"
+                  onClick={handleProtectedWhatsApp}
+                  disabled={!authChecked || actionLoading || selectedVariant?.stock === "out_of_stock"}
+                  className="rounded-xl bg-green-500 py-4 text-center font-bold text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  Order / Inquire on WhatsApp
-                </a>
+                  {!authChecked
+                    ? "Checking..."
+                    : actionLoading
+                    ? "Opening WhatsApp..."
+                    : "Order / Inquire on WhatsApp"}
+                </button>
               </div>
             </div>
           </div>
