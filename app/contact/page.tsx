@@ -91,7 +91,7 @@ export default function Contact() {
   });
 
   return (
-    <div className="bg-[#fdfdfb]">
+    <div className="min-h-screen overflow-x-hidden bg-[#fdfdfb]">
       <Toaster position="top-right" />
 
       <section className="bg-accent/40 px-4 py-14 text-center sm:py-20 lg:py-24">
@@ -100,7 +100,8 @@ export default function Contact() {
             Contact Us
           </h1>
           <p className="mx-auto max-w-2xl text-base font-medium text-gray-600 sm:text-lg lg:text-xl">
-            Have a question or looking for a bulk order? We&apos;re here to help you grow.
+            Have a question or looking for a bulk order? We&apos;re here to help
+            you grow.
           </p>
         </div>
       </section>
@@ -111,7 +112,8 @@ export default function Contact() {
             <div className="space-y-4">
               <h2 className="text-2xl font-bold sm:text-3xl">Visit Our Store</h2>
               <p className="text-base leading-7 text-gray-600 sm:text-lg">
-                Experience expert guidance in person. Our shop is fully stocked with the latest agricultural solutions.
+                Experience expert guidance in person. Our shop is fully stocked
+                with the latest agricultural solutions.
               </p>
             </div>
 
@@ -140,9 +142,12 @@ export default function Contact() {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-lg font-bold sm:text-xl">Phone Support</h4>
-                  <p className="mt-1 text-base text-gray-700 sm:text-lg break-words">
-                    +91 {BUSINESS_DETAILS.phone}
-                  </p>
+                  <a
+                    href={`tel:${String(BUSINESS_DETAILS.phone).replace(/\s+/g, "")}`}
+                    className="mt-1 inline-block whitespace-nowrap text-base text-gray-700 hover:text-primary sm:text-lg"
+                  >
+                    {BUSINESS_DETAILS.phone}
+                  </a>
                   <p className="mt-1 text-sm font-medium text-gray-400">
                     {BUSINESS_DETAILS.timings}
                   </p>
@@ -155,9 +160,12 @@ export default function Contact() {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-lg font-bold sm:text-xl">Email Inquiry</h4>
-                  <p className="mt-1 break-all text-base text-gray-700 sm:text-lg">
+                  <a
+                    href={`mailto:${BUSINESS_DETAILS.email}`}
+                    className="mt-1 break-all text-base text-gray-700 hover:text-primary sm:text-lg"
+                  >
                     {BUSINESS_DETAILS.email}
-                  </p>
+                  </a>
                 </div>
               </div>
 
@@ -167,7 +175,9 @@ export default function Contact() {
                 </div>
                 <div className="min-w-0">
                   <h4 className="text-lg font-bold sm:text-xl">Store Timings</h4>
-                  <p className="mt-1 text-base text-gray-700 sm:text-lg">9:00 AM - 8:00 PM</p>
+                  <p className="mt-1 text-base text-gray-700 sm:text-lg">
+                    9:00 AM - 8:00 PM
+                  </p>
                   <p className="mt-1 text-sm font-medium text-gray-400">
                     Sunday: Closed
                   </p>
@@ -191,7 +201,8 @@ export default function Contact() {
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-3 rounded-[2rem] bg-[#25D366] px-5 py-4 text-base font-bold text-white shadow-lg transition-all hover:shadow-2xl active:scale-95 sm:gap-4 sm:p-5 sm:text-lg lg:text-xl"
               >
-                <MessageSquare size={24} /> Chat on WhatsApp
+                <MessageSquare size={24} />
+                Chat on WhatsApp
               </a>
             </div>
           </div>
