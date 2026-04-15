@@ -303,7 +303,7 @@ export default function ProductDetailsPage() {
                     Need help before ordering?
                   </p>
                   <p className="mt-2">WhatsApp us for best guidance.</p>
-                  <p className="mt-2">WhatsApp: +91 {BUSINESS_DETAILS.phone}</p>
+                  <p className="mt-2">WhatsApp: {BUSINESS_DETAILS.phone}</p>
                   <p className="break-all">Email: {BUSINESS_DETAILS.email}</p>
                 </div>
 

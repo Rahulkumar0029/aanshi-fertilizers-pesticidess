@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { cookies } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/lib/models/User";
@@ -24,37 +25,51 @@ export type SafeUser = {
 };
 
 export async function getUser(): Promise<SafeUser | null> {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  try {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("userId")?.value?.trim();
 
-  if (!userId) return null;
+    if (!userId) return null;
 
-  await connectDB();
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.warn("getUser: invalid userId cookie", userId);
+      return null;
+    }
 
-  const user = await User.findById(userId).select("-password").lean();
+    await connectDB();
 
-  if (!user) return null;
+    const user = await User.findById(userId).select("-password").lean();
 
-  return {
-    id: String(user._id),
-    _id: String(user._id),
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    role: user.role,
-    emailVerified: !!user.emailVerified,
-    phoneVerified: !!user.phoneVerified,
-    signupCompleted: !!user.signupCompleted,
-    pendingEmail: user.pendingEmail || null,
-    address: user.address || {
-      addressLine1: "",
-      addressLine2: "",
-      villageOrCity: "",
-      district: "",
-      state: "",
-      pincode: "",
-    },
-  };
+    if (!user) return null;
+
+    return {
+      id: String(user._id),
+      _id: String(user._id),
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || "user",
+      emailVerified: !!user.emailVerified,
+      phoneVerified: !!user.phoneVerified,
+      signupCompleted: !!user.signupCompleted,
+      pendingEmail: user.pendingEmail || null,
+      address: user.address || {
+        addressLine1: "",
+        addressLine2: "",
+        villageOrCity: "",
+        district: "",
+        state: "",
+        pincode: "",
+      },
+    };
+  } catch (error: any) {
+    console.error("getUser ERROR:", {
+      message: error?.message,
+      stack: error?.stack,
+      name: error?.name,
+    });
+    return null;
+  }
 }
 
 export async function requireOwner(): Promise<SafeUser> {

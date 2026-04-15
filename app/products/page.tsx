@@ -2,11 +2,12 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, Suspense } from "react";
-import { Search } from "lucide-react";
+import { useState, useEffect, Suspense, useMemo } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { buildProductInquiryMessage, openWhatsApp } from "@/lib/whatsapp";
 import ProductCard from "@/components/ProductCard";
+import ProductFiltersSidebar from "@/components/products/ProductFiltersSidebar";
 
 type ProductVariant = {
   label: string;
@@ -26,7 +27,6 @@ type Product = {
   image?: string;
   variants?: ProductVariant[];
 
-  // backward compatibility for old products
   size?: string;
   mrp?: number;
   price?: number;
@@ -82,12 +82,39 @@ function getCompatibleVariant(product: InquiryProduct): ProductVariant | null {
   return null;
 }
 
+function getListingPrice(product: Product) {
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+    const prices = product.variants
+      .map((variant) => variant.price)
+      .filter((price): price is number => typeof price === "number");
+
+    if (prices.length > 0) {
+      return Math.min(...prices);
+    }
+  }
+
+  return typeof product.price === "number" ? product.price : 0;
+}
+
 function ProductsContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+  const [selectedBrand, setSelectedBrand] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [sort, setSort] = useState("");
+
+  const [draftCategory, setDraftCategory] = useState("All");
+  const [draftBrand, setDraftBrand] = useState("");
+  const [draftSize, setDraftSize] = useState("");
+  const [draftAvailability, setDraftAvailability] = useState("");
+  const [draftSort, setDraftSort] = useState("");
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -112,30 +139,164 @@ function ProductsContent() {
   }, []);
 
   useEffect(() => {
-    const categoryFromURL = searchParams.get("category");
-    setSelectedCategory(categoryFromURL || "All");
+    const categoryFromURL = searchParams.get("category") || "All";
+    setSelectedCategory(categoryFromURL);
+    setDraftCategory(categoryFromURL);
   }, [searchParams]);
 
-  const filteredProducts = products.filter((product) => {
-    const matchCategory =
-      selectedCategory === "All" ||
-      product.category?.toLowerCase().trim() ===
-        selectedCategory.toLowerCase().trim();
+  const brands = useMemo(() => {
+    return [
+      ...new Set(
+        products
+          .map((product) => product.brand?.trim())
+          .filter((value): value is string => Boolean(value))
+      ),
+    ].sort((a, b) => a.localeCompare(b));
+  }, [products]);
 
-    const query = searchQuery.toLowerCase().trim();
+  const sizes = useMemo(() => {
+    return [
+      ...new Set(
+        products.flatMap((product) => {
+          if (Array.isArray(product.variants) && product.variants.length > 0) {
+            return product.variants
+              .map((variant) => variant.label?.trim())
+              .filter((value): value is string => Boolean(value));
+          }
 
-    const matchSearch =
-      !query ||
-      product.name?.toLowerCase().includes(query) ||
-      product.brand?.toLowerCase().includes(query) ||
-      product.category?.toLowerCase().includes(query) ||
-      product.size?.toLowerCase().includes(query) ||
-      product.variants?.some((variant) =>
-        variant.label.toLowerCase().includes(query)
-      );
+          return product.size?.trim() ? [product.size.trim()] : [];
+        })
+      ),
+    ].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [products]);
 
-    return Boolean(matchCategory && matchSearch);
-  });
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((product) => {
+        const matchCategory =
+          selectedCategory === "All" ||
+          product.category?.toLowerCase().trim() ===
+            selectedCategory.toLowerCase().trim();
+
+        const query = searchQuery.toLowerCase().trim();
+
+        const matchSearch =
+          !query ||
+          product.name?.toLowerCase().includes(query) ||
+          product.brand?.toLowerCase().includes(query) ||
+          product.category?.toLowerCase().includes(query) ||
+          product.size?.toLowerCase().includes(query) ||
+          product.variants?.some((variant) =>
+            variant.label.toLowerCase().includes(query)
+          );
+
+        const matchBrand =
+          !selectedBrand ||
+          product.brand?.toLowerCase().trim() ===
+            selectedBrand.toLowerCase().trim();
+
+        const matchSize =
+          !selectedSize ||
+          product.size?.toLowerCase().trim() ===
+            selectedSize.toLowerCase().trim() ||
+          product.variants?.some(
+            (variant) =>
+              variant.label.toLowerCase().trim() ===
+              selectedSize.toLowerCase().trim()
+          );
+
+        const matchAvailability =
+          !availability ||
+          product.variants?.some((variant) => variant.stock === availability) ||
+          (!product.variants?.length && availability === "in_stock");
+
+        return Boolean(
+          matchCategory &&
+            matchSearch &&
+            matchBrand &&
+            matchSize &&
+            matchAvailability
+        );
+      })
+      .sort((a, b) => {
+        if (sort === "price_asc") {
+          return getListingPrice(a) - getListingPrice(b);
+        }
+
+        if (sort === "price_desc") {
+          return getListingPrice(b) - getListingPrice(a);
+        }
+
+        return 0;
+      });
+  }, [
+    products,
+    selectedCategory,
+    searchQuery,
+    selectedBrand,
+    selectedSize,
+    availability,
+    sort,
+  ]);
+
+  const activeFilterCount = [
+    selectedCategory !== "All",
+    selectedBrand !== "",
+    selectedSize !== "",
+    availability !== "",
+    sort !== "",
+  ].filter(Boolean).length;
+
+  const openFilters = () => {
+    setDraftCategory(selectedCategory);
+    setDraftBrand(selectedBrand);
+    setDraftSize(selectedSize);
+    setDraftAvailability(availability);
+    setDraftSort(sort);
+    setIsFilterOpen(true);
+  };
+
+  const closeFilters = () => {
+    setIsFilterOpen(false);
+  };
+
+  const applyFilters = () => {
+    setSelectedCategory(draftCategory);
+    setSelectedBrand(draftBrand);
+    setSelectedSize(draftSize);
+    setAvailability(draftAvailability);
+    setSort(draftSort);
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (draftCategory && draftCategory !== "All") {
+      params.set("category", draftCategory);
+    } else {
+      params.delete("category");
+    }
+
+    const queryString = params.toString();
+    router.push(queryString ? `/products?${queryString}` : "/products");
+
+    setIsFilterOpen(false);
+  };
+
+  const clearFilters = () => {
+    setDraftCategory("All");
+    setDraftBrand("");
+    setDraftSize("");
+    setDraftAvailability("");
+    setDraftSort("");
+
+    setSelectedCategory("All");
+    setSelectedBrand("");
+    setSelectedSize("");
+    setAvailability("");
+    setSort("");
+
+    router.push("/products");
+    setIsFilterOpen(false);
+  };
 
   const handleInquiry = async (product: InquiryProduct) => {
     try {
@@ -237,16 +398,34 @@ function ProductsContent() {
 
       <section className="container-app -mt-6">
         <div className="rounded-2xl bg-white p-4 shadow-xl">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-            <div className="relative w-full lg:max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name, brand, size..."
-                className="w-full rounded-xl border py-3 pl-12 pr-4 outline-none"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:max-w-[760px]">
+  <div className="relative flex-1">
+    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+    <input
+      type="text"
+      placeholder="Search by name, brand, size..."
+      className="w-full rounded-xl border py-3 pl-12 pr-4 outline-none"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+    />
+  </div>
+
+  <button
+    type="button"
+    onClick={openFilters}
+    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 font-medium text-gray-800 transition hover:bg-gray-50 sm:min-w-[130px]"
+  >
+    <SlidersHorizontal size={18} />
+    Filter
+    {activeFilterCount > 0 ? (
+      <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-white">
+        {activeFilterCount}
+      </span>
+    ) : null}
+  </button>
+</div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -256,7 +435,10 @@ function ProductsContent() {
                   type="button"
                   onClick={() => {
                     setSelectedCategory(cat);
-                    router.push(`/products?category=${cat}`);
+                    setDraftCategory(cat);
+                    router.push(
+                      cat === "All" ? "/products" : `/products?category=${cat}`
+                    );
                   }}
                   className={`rounded-full px-4 py-2 ${
                     selectedCategory === cat
@@ -277,6 +459,13 @@ function ProductsContent() {
           <p className="text-center">Loading...</p>
         ) : (
           <>
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <p className="text-sm text-gray-600">
+                {filteredProducts.length} product
+                {filteredProducts.length !== 1 ? "s" : ""} found
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredProducts.map((product) => (
                 <ProductCard
@@ -296,6 +485,26 @@ function ProductsContent() {
           </>
         )}
       </section>
+
+      <ProductFiltersSidebar
+        isOpen={isFilterOpen}
+        onClose={closeFilters}
+        categories={CATEGORIES}
+        brands={brands}
+        sizes={sizes}
+        selectedCategory={draftCategory}
+        setSelectedCategory={setDraftCategory}
+        selectedBrand={draftBrand}
+        setSelectedBrand={setDraftBrand}
+        selectedSize={draftSize}
+        setSelectedSize={setDraftSize}
+        availability={draftAvailability}
+        setAvailability={setDraftAvailability}
+        sort={draftSort}
+        setSort={setDraftSort}
+        clearFilters={clearFilters}
+        applyFilters={applyFilters}
+      />
     </div>
   );
 }
